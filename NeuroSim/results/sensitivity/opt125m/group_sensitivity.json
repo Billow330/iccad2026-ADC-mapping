@@ -1,0 +1,42 @@
+{
+  "attn_qkv": {
+    "ltype": "attn_qkv",
+    "n_layers": 36,
+    "ppl": 338.45738802533316,
+    "delta_ppl": 4.617805831052181,
+    "delta_per_layer": 0.1282723841958939,
+    "sat_rate": 0.03526885044749518
+  },
+  "attn_out": {
+    "ltype": "attn_out",
+    "n_layers": 12,
+    "ppl": 344.2284302479466,
+    "delta_ppl": 10.38884805366564,
+    "delta_per_layer": 0.86573733780547,
+    "sat_rate": 0.03520216138749887
+  },
+  "ffn_up": {
+    "ltype": "ffn_up",
+    "n_layers": 12,
+    "ppl": 336.2570381915192,
+    "delta_ppl": 2.4174559972382212,
+    "delta_per_layer": 0.20145466643651844,
+    "sat_rate": 0.035568973605305775
+  },
+  "ffn_down": {
+    "ltype": "ffn_down",
+    "n_layers": 12,
+    "ppl": 350.7944491292349,
+    "delta_ppl": 16.95486693495394,
+    "delta_per_layer": 1.4129055779128283,
+    "sat_rate": 0.03529345573253057
+  },
+  "lm_head": {
+    "ltype": "lm_head",
+    "n_layers": 1,
+    "ppl": 334.53997509735547,
+    "delta_ppl": 0.7003929030744871,
+    "delta_per_layer": 0.7003929030744871,
+    "sat_rate": 0.03529983891877792
+  }
+}

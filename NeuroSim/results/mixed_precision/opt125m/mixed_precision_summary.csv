@@ -1,0 +1,8 @@
+config,ppl_estimated,chip_area_mm2,adc_area_mm2,adc_area_pct,adc_savings_pct,chip_savings_pct,n_layers_3b,n_layers_4b,n_layers_5b,n_layers_6b,n_layers_7b,n_layers_8b,n_layers_9b,n_layers_10b,n_layers_11b
+Uniform 4b,372.72,736.7225,28.5541,3.9,87.5,21.3,0,73,0,0,0,0,0,0,0
+Uniform 5b,343.38,765.2766,57.1081,7.5,75.0,18.3,0,0,73,0,0,0,0,0,0
+Uniform 6b,344.50,822.3847,114.2162,13.9,50.0,12.2,0,0,0,73,0,0,0,0,0
+Uniform 7b,343.05,936.6009,228.4324,24.4,-0.0,-0.0,0,0,0,0,73,0,0,0,0
+Uniform 8b,346.10,1165.0333,456.8649,39.2,-100.0,-24.4,0,0,0,0,0,73,0,0,0
+"Mixed (greedy, 30% savings)",343.48,888.0981,179.9297,20.3,21.2,5.2,0,0,0,33,39,1,0,0,0
+"Mixed+SQ (greedy, 30% target)",343.48,888.0981,179.9297,20.3,21.2,5.2,0,0,0,33,39,1,0,0,0

@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//tmp/**)",
+      "Bash(sudo apt-get install -y texlive-publishers)",
+      "Bash(sudo mktexlsr)",
+      "Bash(python3 -c \":*)",
+      "Bash(export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin)",
+      "Bash(pdflatex -interaction=nonstopmode main.tex)",
+      "Bash(python3 llm_inference.py --model gpt2 --task smooth --adc_bits 7 --adc_clip_pct 99.0 --num_calib_batches 2 --num_eval_batches 5 --output_dir ./results/smoke_p99 --device cpu)",
+      "Bash(python3 llm_inference.py --model gpt2 --task smooth --adc_bits 7 --adc_clip_pct 99.0 --num_calib_batches 4 --num_eval_batches 10 --output_dir ./results/smoke_v2 --device cpu)",
+      "Bash(./main NetWork_ResNet18.csv 8 8 128 1)",
+      "Bash(timeout 120 python3 -c \":*)",
+      "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\(json.dumps\\(d, indent=2\\)\\)\")",
+      "Read(//proc/161888/**)",
+      "Bash(python3 mixed_precision_adc.py --outlier_csv results/opt125m/outlier_facebook_opt-125m_adc7.csv --sweep_csv results/opt125m/sweep_adc_facebook_opt-125m.csv --ppa_csv results/ppa/opt125m/ppa_sweep_opt125m.csv --nominal_bits 7 --min_bits 4 --max_bits 8 --target_savings 30 --output_dir results/mixed_precision/opt125m)",
+      "Bash(python3 -:*)"
+    ],
+    "defaultMode": "bypassPermissions"
+  }
+}

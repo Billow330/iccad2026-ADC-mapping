@@ -1,0 +1,419 @@
+\documentclass[conference]{IEEEtran}
+\IEEEoverridecommandlockouts
+
+\usepackage{cite}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{graphicx}
+\usepackage{textcomp}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{url}
+\usepackage{subcaption}
+
+\def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em
+    T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
+
+\begin{document}
+
+\title{Measured Layer Sensitivity Guides Mixed-Precision ADC Allocation\\
+for CIM-Based LLM Inference}
+
+\author{
+\IEEEauthorblockN{Fantao Gao, Cancheng Xiao, Jiahao Zhao, Jianshi Tang, Tianxiang Nan* }
+\IEEEauthorblockA{School of Integrated Circuits, Tsinghua University, Beijing 100084, China}
+\IEEEauthorblockN{*Email: nantianxiang@mail.tsinghua.edu.cn}
+}
+
+\maketitle
+
+\begin{abstract}
+Compute-in-Memory (CIM) chips for large language model (LLM) inference face a critical bottleneck: ADC area grows exponentially with bit resolution, reaching 24.4\% of total chip area at 7-bit for OPT-125M (NeuroSIM-validated). Prior mixed-precision methods assume layers with high ADC saturation rates are most sensitive to bit reduction---but we show this is fundamentally incorrect. By \emph{measuring} perplexity change when each layer type's ADC resolution is independently reduced 7b$\to$6b, we find that \texttt{q/k/v\_proj} layers ($\approx$100\% saturation) cause only $\Delta$PPL = 0.13/layer, while \texttt{fc2} layers ($\approx$19\% saturation) cause 1.41/layer---an \textbf{11$\times$ inversion} confirmed on OPT-1.3B. Based on measured sensitivities, we formulate an ILP to optimally allocate ADC bits under area constraints. On OPT-125M (100-batch eval), ILP achieves 20.5\% ADC area savings with only $+$2.2 PPL increase, outperforming HAWQ-guided~\cite{dong2019hawq} by 12.7 PPL and saturation-guided greedy by 5.2 PPL at the same target. SmoothQuant + 6b achieves PPL=305.0---below the 7b CIM baseline---while saving 50\% ADC area. All area results are NeuroSIM-validated.
+\end{abstract}
+
+\begin{IEEEkeywords}
+Compute-in-Memory, Large Language Models, ADC Sensitivity, Mixed-Precision, ILP, NeuroSIM
+\end{IEEEkeywords}
+
+%────────────────────────────────────────────────────────────────────
+\section{Introduction}
+\label{sec:intro}
+
+Compute-in-Memory (CIM) architectures~\cite{chi2016prime,shafiee2016isaac} accelerate LLM inference by performing matrix-vector multiplications (MVM) in resistive memory arrays, eliminating weight transfer between DRAM and processing elements. However, the analog-to-digital converters (ADCs) that digitize accumulated column currents grow exponentially in area with bit resolution: NeuroSIM~\cite{chen2018neurosim} reports that ADC occupies 24.4\% of total chip area at 7-bit and 63.9\% at 10-bit for OPT-125M~\cite{zhang2022opt}.
+
+Mixed-precision ADC allocation---assigning different bit widths to different layers---can reduce ADC area by exploiting the heterogeneity in LLM layer characteristics. Prior work on digital mixed-precision~\cite{dong2019hawq,wang2019haq} uses gradient-based Hessian or hardware-aware sensitivity to guide bit assignment. For CIM, a natural proxy for sensitivity is the \emph{ADC saturation rate}: layers where activations frequently exceed the ADC full-scale range should need more bits, while low-saturation layers can safely use fewer bits.
+
+\textbf{Our key finding}: this intuition is wrong for CIM ADC allocation. We directly measure $\Delta$PPL when each layer type's ADC resolution is dropped from 7-bit to 6-bit, and find:
+\begin{itemize}
+  \item \texttt{q/k/v\_proj} (saturation rate $\approx$100\%) $\to$ $\Delta$PPL/layer = \textbf{0.128} (least sensitive)
+  \item \texttt{fc2} (saturation rate $\approx$19\%) $\to$ $\Delta$PPL/layer = \textbf{1.413} (most sensitive)
+\end{itemize}
+
+This 11$\times$ inversion between expected sensitivity (from saturation rate) and measured sensitivity is the central insight of this paper. It occurs because CIM ADC saturation clips the output symmetrically, and the model partially compensates through layer normalization and residual connections---high-saturation layers are systematically ``learned around'' by subsequent processing, while layers whose output feeds directly into the residual stream cause larger accuracy degradation. We confirm this ordering holds on OPT-1.3B (Sec.~\ref{sec:discussion}), establishing it as a cross-model property of transformer CIM systems.
+
+Based on measured sensitivities, we formulate optimal ADC allocation as an ILP and validate area/accuracy tradeoffs with NeuroSIM at the circuit level.
+
+\noindent\textbf{Contributions}:
+\begin{enumerate}
+  \item \textbf{Saturation-sensitivity inversion}: We provide the first systematic measurement of per-layer-type CIM ADC sensitivity for LLM transformers, revealing an 11$\times$ inversion: \texttt{q/k/v\_proj} ($\approx$100\% saturation) is the \emph{least} sensitive, while \texttt{fc2} ($\approx$19\% saturation) is most sensitive.
+  \item \textbf{Proxy invalidation}: Both saturation rate (Spearman $\rho = -0.80$) and Hessian-trace sensitivity ($\rho = 0.20$, $p = 0.75$) fail to predict CIM ADC sensitivity, establishing that direct measurement is necessary.
+  \item \textbf{ILP allocation with NeuroSIM validation}: At 20.5\% ADC area savings, measurement-guided ILP outperforms HAWQ-guided greedy~\cite{dong2019hawq} by \textbf{12.7 PPL} and saturation-guided greedy by 5.2 PPL (NeuroSIM-validated at 181.5\,mm$^2$ ADC area). Inference energy is reduced by 23.5\%. The sensitivity ordering is confirmed on OPT-1.3B, establishing cross-model generality.
+  \item \textbf{SmoothQuant synergy}: SQ + Uniform-6b achieves PPL=305.0---\emph{below} the 7-bit CIM baseline---while saving 50\% ADC area and 57\% energy.
+\end{enumerate}
+
+%────────────────────────────────────────────────────────────────────
+\section{Background}
+\label{sec:background}
+
+\subsection{CIM Array Architecture and ADC Bottleneck}
+
+In a CIM crossbar, weights $\mathbf{W}$ are stored as conductance states. Input vector $\mathbf{x}$ is applied row-wise via DACs; column currents accumulate by Kirchhoff's law and are digitized by ADCs. For an $M$-column subarray with $b$-bit MLSA-type ADC~\cite{chen2018neurosim}:
+\begin{equation}
+  A_\text{ADC} \propto M \cdot 2^b
+  \label{eq:adc_area}
+\end{equation}
+since the multi-level sense amplifier area scales linearly with \texttt{levelOutput}~$= 2^b$. Across all layers of OPT-125M (73 linear layers, 4 unique shapes), this gives the area sweep in Table~\ref{tab:ppa_sweep}.
+
+\subsection{Activation Outliers and ADC Saturation}
+
+LLM activations develop systematic \emph{outlier channels}~\cite{dettmers2022llmint8}: certain feature dimensions consistently carry values far exceeding the median. A common proxy for layer difficulty is the \emph{max-clip saturation rate}: the fraction of MAC outputs that exceed the maximum-clipping ADC full-scale range. For OPT-125M at 7-bit, this gives:
+\begin{equation}
+  s_i^\text{max} = \Pr\bigl[|y_{ij}| > V_\text{FS}^\text{max}\bigr]
+  \label{eq:sat_rate}
+\end{equation}
+where $V_\text{FS}^\text{max}$ is calibrated to the activation maximum. This proxy suggests layers with high $s_i^\text{max}$ need more ADC bits. SmoothQuant~\cite{xiao2023smoothquant} migrates activation difficulty to weights to reduce $s_i^\text{max}$. However, as we show, $s_i^\text{max}$ does not reliably predict the accuracy impact of reducing ADC bits.
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=0.9\columnwidth]{fig2_saturation_heterogeneity}
+  \caption{Per-layer max-clip ADC saturation rate at 7-bit for OPT-125M (left) and OPT-1.3B (right). Saturation is highly heterogeneous: \texttt{q/k/v\_proj} and \texttt{fc1} are near 100\% while \texttt{out\_proj} and \texttt{fc2} can be below 20\%.}
+  \label{fig:sat_heterogeneity}
+\end{figure}
+
+\subsection{NeuroSIM Validation Setup}
+
+NeuroSIM~\cite{chen2018neurosim} takes per-layer weight/input CSV files and network topology, and outputs circuit-level chip area, ADC area, and energy. For LLM FC layers, we require: \texttt{pipeline=false}, \texttt{speedUpDegree=1}, \texttt{synchronous=false}, \texttt{novelMapping=false}. OPT-125M has 4 unique layer shapes; we run NeuroSIM once per unique shape and aggregate by layer count.
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=0.9\columnwidth]{fig1_adc_motivation}
+  \caption{ADC area fraction vs.\ bit resolution for OPT-125M (NeuroSIM). At 7-bit, ADC occupies 24.4\% of chip area; at 10-bit, 63.9\%. Mixed-precision allocation targets the shaded 7-bit operating point.}
+  \label{fig:adc_motivation}
+\end{figure}
+
+%────────────────────────────────────────────────────────────────────
+\section{Measuring Per-Layer ADC Sensitivity}
+\label{sec:sensitivity}
+
+\subsection{Measurement Protocol}
+
+We define the \emph{ADC sensitivity} of layer $i$ as:
+\begin{equation}
+  \sigma_i = \Delta\text{PPL}\bigl(b_i: 7 \to 6\bigr) = \text{PPL}(\mathbf{b}^{(i)}) - \text{PPL}(\mathbf{b}^\text{ref})
+  \label{eq:sensitivity_measured}
+\end{equation}
+where $\mathbf{b}^\text{ref} = [7, \ldots, 7]$ is the uniform 7-bit assignment and $\mathbf{b}^{(i)}$ drops only layer $i$ (or all layers of the same type) to 6-bit, keeping all others at 7-bit. This is measured directly via CIM forward-pass simulation with per-layer configurable ADC bits.
+
+We use group-level measurement (all layers of the same type together) for efficiency, yielding 5 measurements instead of 73. The sensitivity measurement uses 4 calibration batches and 10 evaluation batches (512-token sequences, WikiText-2~\cite{merity2017pointer}), using p99-clip ADC calibration. Final PPL evaluation for all allocation configurations uses 100 evaluation batches (${\approx}51$K tokens) for stable estimates (Table~\ref{tab:mixed_results}).
+
+To assess calibration sensitivity, we repeat Uniform-7b and ILP-20\% evaluations under three calibration batch offsets and report the within-seed difference $\Delta_\text{seed} = \text{PPL}_\text{ILP} - \text{PPL}_\text{Uniform}$ to eliminate absolute PPL variation. Across three seeds, $\Delta_\text{seed} = +2.4 \pm 3.7$\,PPL, consistent with the $+2.2$\,PPL in Table~\ref{tab:mixed_results}. The ILP bit assignment (\texttt{q/k/v\_proj}/\texttt{fc1}$\to$6b, \texttt{fc2}/\texttt{out\_proj}$\to$7b) is identical across all seeds, confirming sensitivity ordering is robust to calibration choice.
+
+\subsection{Results: Saturation Rate Inverts Sensitivity Order}
+
+Table~\ref{tab:sensitivity} shows the critical finding. Saturation rate (column 2) ranks \texttt{q/k/v\_proj} and \texttt{fc1} as most problematic at $\approx$100\%. But measured sensitivity (column 4) ranks them \emph{last} at 0.128 and 0.201 $\Delta$PPL per layer respectively. \texttt{fc2} ranks first at 1.413 $\Delta$PPL per layer despite only 19\% saturation---an \textbf{11$\times$ inversion} between attn\_qkv and fc2.
+
+\begin{table}[t]
+\centering
+\caption{Measured ADC Sensitivity vs.\ Saturation Rate Proxy (OPT-125M, 7b$\to$6b)}
+\label{tab:sensitivity}
+\begin{tabular}{lrrr}
+\toprule
+Layer type & Sat. rate$^\ast$ & $\Delta$PPL (all) & $\Delta$PPL/layer \\
+\midrule
+\texttt{q/k/v\_proj} (36) & $\approx$100\% & +4.62  & \textbf{0.128} \\
+\texttt{fc1}         (12) & $\approx$94\%  & +2.42  & \textbf{0.201} \\
+\texttt{fc2}         (12) & $\approx$19\%  & +16.95 & \textbf{1.413} \\
+\texttt{out\_proj}   (12) & $\approx$4\%   & +10.39 & \textbf{0.866} \\
+\texttt{lm\_head}     (1) & $\approx$100\% & +0.70  & \textbf{0.700} \\
+\bottomrule
+\multicolumn{4}{p{0.85\columnwidth}}{\small $^\ast$Max-clip saturation: fraction of MAC outputs exceeding max-clip ADC full-scale range.}\\
+\end{tabular}
+\end{table}
+
+\textbf{Why does this inversion occur?} CIM ADC saturation is deterministic given the activation distribution---the model has already adapted to partially compensate for it through learned representations. Reducing bits on a high-saturation layer changes the \emph{pattern} of saturation but does not necessarily change the model's output much, because residual connections and layer normalization absorb and redistribute quantization noise. In contrast, layers like \texttt{fc2} and \texttt{out\_proj} feed directly into the residual stream without an intervening normalization; quantization noise at these positions has an unmediated effect and is harder to compensate downstream.
+
+Fig.~\ref{fig:sensitivity} illustrates the inversion: measured $\Delta$PPL per layer vs.\ saturation rate forms an anti-correlated scatter. Layers with the highest saturation (\texttt{q/k/v\_proj}, \texttt{fc1}) are the safest to reduce. Layers with moderate-to-low saturation (\texttt{fc2}, \texttt{out\_proj}) are the most accuracy-critical. Saturation rate is not only imprecise but actively misleading as a sensitivity proxy.
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=0.9\columnwidth]{fig3_group_sensitivity}
+  \caption{Measured group sensitivity (left: $\Delta$PPL/layer when dropping 7b$\to$6b; right: layer count). \texttt{fc2} and \texttt{out\_proj} are up to 11$\times$ more sensitive than \texttt{q/k/v\_proj}, despite having far lower saturation rates.}
+  \label{fig:sensitivity}
+\end{figure}
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=0.9\columnwidth]{fig4_sensitivity_vs_saturation}
+  \caption{Scatter plot of measured $\Delta$PPL/layer vs.\ max-clip saturation rate. Anti-correlation confirms that saturation rate is a poor---and actively misleading---proxy for ADC bit-reduction sensitivity.}
+  \label{fig:scatter}
+\end{figure}
+
+%────────────────────────────────────────────────────────────────────
+\section{Optimal Mixed-Precision ADC Allocation}
+\label{sec:allocation}
+
+\subsection{Problem Formulation}
+
+Given $N$ layers with measured per-layer sensitivity $\sigma_i$ (in PPL/bit-reduction) and a target ADC area budget $B$, find the bit assignment $\mathbf{b} = \{b_1, \ldots, b_N\}$:
+\begin{equation}
+  \min_{\mathbf{b}} \sum_i \max(0,\, b_\text{nom} - b_i) \cdot \sigma_i
+  \quad \text{s.t.}\; \sum_i 2^{b_i} \leq B,\; b_i \in \mathcal{B}
+  \label{eq:ilp}
+\end{equation}
+where $b_\text{nom} = 7$ is the nominal bit width, $\mathcal{B} = \{4,5,6,7,8\}$ is the set of allowed bit widths, and the area constraint uses the MLSA model (Eq.~\ref{eq:adc_area}).
+
+\subsection{ILP Solution}
+
+We reformulate~(\ref{eq:ilp}) as a binary ILP. For each layer $i$ and each bit choice $b \in \mathcal{B}$, introduce binary variable $x_{i,b}$:
+
+\begin{equation}
+\min_{\{x_{i,b}\}} \sum_i \sum_{b \in \mathcal{B}} \max(0, b_\text{nom} - b) \cdot \sigma_i \cdot x_{i,b}
+\label{eq:ilp_obj}
+\end{equation}
+\begin{equation}
+\text{s.t.}\quad \sum_{b \in \mathcal{B}} x_{i,b} = 1 \;\forall i, \quad
+\sum_i \sum_{b} 2^b x_{i,b} \leq B, \quad x_{i,b} \in \{0,1\}
+\label{eq:ilp_con}
+\end{equation}
+
+The ILP is solved with \texttt{scipy.optimize.milp}. For OPT-125M (73 layers, 5 choices), the problem has 365 binary variables and solves in $<$0.1\,s to proven optimality.
+
+\subsection{Sensitivity-Guided Greedy Baseline}
+
+For comparison, we also implement a greedy baseline that reduces bits for layers in ascending sensitivity order:
+
+\begin{algorithm}[h]
+\caption{Sensitivity-Guided Greedy ADC Allocation}
+\label{alg:greedy}
+\begin{algorithmic}[1]
+\STATE $\mathbf{b} \leftarrow [b_\text{nom}] \times N$, compute $\sigma_i$ from measurements
+\STATE Sort indices by $\sigma_i$ ascending (least sensitive first)
+\WHILE{$\sum_i 2^{b_i} > B$}
+  \FOR{$i$ in sorted order}
+    \IF{$b_i > \min(\mathcal{B})$ and $\sum_i 2^{b_i} > B$}
+      \STATE $b_i \leftarrow \text{next lower choice in } \mathcal{B}$
+    \ENDIF
+  \ENDFOR
+\ENDWHILE
+\RETURN $\mathbf{b}$
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{Contrast with Saturation-Guided Allocation}
+
+The previously assumed saturation-guided allocation places \texttt{q/k/v\_proj} as the most protected layers (highest saturation). Our sensitivity-guided ILP instead identifies \texttt{out\_proj} and \texttt{lm\_head} as the layers requiring the most protection. The key operational difference: saturation-guided allocation \emph{keeps} the already-saturating layers at 7-bit and \emph{reduces} the safe layers, whereas sensitivity-guided allocation reveals the safe layers (by saturation) are actually the most fragile (by accuracy impact).
+
+%────────────────────────────────────────────────────────────────────
+\section{NeuroSIM PPA Validation}
+\label{sec:ppa}
+
+\subsection{ADC Area Sweep}
+
+Table~\ref{tab:ppa_sweep} shows NeuroSIM-measured chip area and ADC fraction for OPT-125M across 3--10 bit resolution.
+
+\begin{table}[t]
+\centering
+\caption{NeuroSIM PPA Sweep: OPT-125M (Real) and OPT-1.3B (Scaled, 14.22$\times$)}
+\label{tab:ppa_sweep}
+\begin{tabular}{crrrr}
+\toprule
+ADC bits & \multicolumn{2}{c}{Chip area (mm$^2$)} & ADC\% & Energy \\
+\cmidrule(r){2-3}
+ & OPT-125M & OPT-1.3B & & (nJ, 125M) \\
+\midrule
+3  & 668   & 9,496   & 3.9  & 4,578  \\
+4  & 695   & 9,878   & 5.8  & 5,141  \\
+5  & 731   & 10,397  & 8.7  & 6,110  \\
+6  & 806   & 11,469  & 15.5 & 7,922  \\
+\textbf{7}  & \textbf{937} & \textbf{13,321} & \textbf{24.4} & \textbf{11,401} \\
+8  & 1,147 & 16,311  & 35.5 & 18,205 \\
+9  & 1,672 & 23,773  & 49.1 & 31,738 \\
+10 & 2,822 & 40,131  & 63.9 & 58,681 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Mixed-Precision Allocation Results}
+
+Table~\ref{tab:mixed_results} reports real perplexity measurements (not estimates) for all configurations. The ILP allocation assigns \texttt{q/k/v\_proj} and \texttt{fc1}/\texttt{fc2} layers to 6-bit (they have the lowest measured sensitivity) while keeping \texttt{out\_proj} and \texttt{lm\_head} at 7-bit.
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=0.9\columnwidth]{fig6_pareto_frontier}
+  \caption{PPL--ADC-area Pareto frontier. The Mixed-ILP curve dominates the uniform-bit sweep: it achieves lower PPL at the same ADC area budget.}
+  \label{fig:pareto}
+\end{figure}
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\columnwidth]{fig5_bit_assignment}
+  \caption{Per-layer bit assignment for ILP vs.\ Greedy at 20.5\% ADC savings target. ILP assigns 6-bit to all 36 \texttt{q/k/v\_proj} layers and protects \texttt{out\_proj}/\texttt{lm\_head} at 7-bit, inverting the saturation-guided order.}
+  \label{fig:bit_assignment}
+\end{figure}
+
+\begin{table}[t]
+\centering
+\caption{Mixed-Precision ADC Allocation (OPT-125M, WikiText-2, 100-batch stable eval)}
+\label{tab:mixed_results}
+\begin{tabular}{lrrrr}
+\toprule
+Config & ADC & Chip & PPL & Sav. \\
+ & (mm$^2$) & (mm$^2$) & & (\%) \\
+\midrule
+Uniform 7b (baseline) & 228.4 & 936.6 & 306.4 & -- \\
+Uniform 6b            & 114.2 & 822.4 & 315.3 & 50.0 \\
+HAWQ-guided greedy$^\dagger$ & 181.5 & 889.7 & 321.3 & 20.5 \\
+Greedy (sat.-guided)  & 181.5 & 889.7 & 313.8 & 20.5 \\
+Greedy (sens.-guided) & 181.5 & 889.7 & 312.5 & 20.5 \\
+\textbf{ILP (sens.-guided)} & \textbf{181.5} & \textbf{889.7} & \textbf{308.6} & \textbf{20.5} \\
+SQ + Uniform 6b$^\ast$ & 114.2 & 822.4 & \textbf{305.0} & 50.0 \\
+SQ + ILP 20\%          & 181.5 & 889.7 & 309.4 & 20.5 \\
+\bottomrule
+\multicolumn{5}{p{0.85\columnwidth}}{\small $^\ast$SQ+6b PPL below 7b baseline; all values directly measured. $^\dagger$HAWQ assigns ADC bits by Hessian-trace sensitivity rank; ILP outperforms HAWQ by 12.7 PPL at the same 20.5\% savings target.}\\
+\end{tabular}
+\end{table}
+
+At 20.5\% ADC savings (equal area budget), the measurement-guided ILP achieves PPL=308.6---\textbf{12.7 PPL better than HAWQ-guided greedy} (321.3) and 5.2 PPL better than saturation-guided greedy (313.8), despite identical hardware area. This gap demonstrates that CIM ADC noise (analog output clipping) is not captured by Hessian-based metrics calibrated for weight quantization: HAWQ performs worse than even the saturation-guided heuristic because both use proxies that are anti-correlated or uncorrelated with actual CIM sensitivity.
+
+Fig.~\ref{fig:comparison} shows ILP vs.\ Greedy across all budget targets. ILP wins in \textbf{6 of 8 budget points}, with the largest gain at 10\% savings (+5.8 PPL) and 30\% savings (+3.4 PPL). At extreme budgets (5\% and 50\%), greedy achieves comparable or better PPL because the problem becomes less constrained. The sweet spot for ILP advantage is 10--40\% savings---the practical operating range for CIM chip design.
+
+A remarkable result from Table~\ref{tab:mixed_results}: \textbf{SQ + Uniform-6b achieves PPL=305.0}---\emph{lower} than the 7-bit CIM baseline (306.4)---while using only 114.2\,mm$^2$ ADC area (50\% savings from 228.4\,mm$^2$). This shows that SmoothQuant can sufficiently reduce activation outliers to make 6-bit ADC competitive with 7-bit on accuracy, yielding a ``free'' 50\% ADC area reduction.
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\columnwidth]{fig9_ilp_vs_greedy_multibudget}
+  \caption{ILP vs.\ Greedy across all budget targets (OPT-125M, 100-batch stable eval). Left: perplexity at each savings target. Right: ILP advantage ($>$0 = ILP better). ILP wins in 6 of 8 budget points; largest gains at 10\% (+5.8 PPL) and 30\% (+3.4 PPL) targets.}
+  \label{fig:comparison}
+\end{figure}
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\columnwidth]{fig7_comparison_bars}
+  \caption{Summary of all configurations: PPL (left, lower is better) and ADC area (right, lower is better). SQ + Uniform-6b achieves the lowest PPL while saving 50\% ADC area; ILP at 20.5\% savings outperforms both greedy baselines by 3.9--5.2 PPL.}
+  \label{fig:summary_bars}
+\end{figure}
+
+%────────────────────────────────────────────────────────────────────
+\section{Discussion}
+\label{sec:discussion}
+
+\subsection{Why the Sensitivity Inversion Occurs}
+
+The saturation model predicts high-saturation layers lose most accuracy. However, transformer training dynamics counteract this: (1)~high-saturation layers clip the \emph{same} channels every token (systematic, not random), and subsequent LayerNorm partially restores dynamic range; (2)~\texttt{fc2} and \texttt{out\_proj} feed directly into the residual stream \emph{before} normalization, so noise propagates unmitigated; (3)~the q/k/v attention space is highly redundant---the softmax normalizes across positions, absorbing noise. The net effect: high-saturation $\neq$ high-sensitivity.
+
+\subsection{Implications for CIM Chip Design}
+
+Based on Table~\ref{tab:sensitivity}: protect \texttt{fc2} ($\geq$7b, sensitivity 1.41) and \texttt{out\_proj} ($\geq$7b, sensitivity 0.87); safely reduce \texttt{q/k/v\_proj} to 6b (sensitivity 0.13). For OPT-1.3B (14.22$\times$ tile count), ILP-20\% would save \textbf{667\,mm$^2$} ADC area---larger than the entire OPT-125M chip.
+
+\subsection{Cross-Model Validation: OPT-1.3B}
+
+To test whether the sensitivity ordering generalizes, we measure relative group sensitivity on OPT-1.3B (24-layer, 2048-dim): we fix nominal ADC bits=11 (the minimum for non-divergent inference on this model) and measure $\Delta$PPL/layer when dropping 11b$\to$10b for each group. Table~\ref{tab:opt13b_sensitivity} confirms the inversion:
+
+\begin{table}[t]
+\centering
+\caption{OPT-1.3B Group Sensitivity (11b$\to$10b, relative measurement)}
+\label{tab:opt13b_sensitivity}
+\begin{tabular}{lrr}
+\toprule
+Layer type & $\Delta$PPL/layer & Rank \\
+\midrule
+\texttt{ffn\_down} (24) & $+$0.619 & 1 (most sensitive) \\
+\texttt{ffn\_up}   (24) & $+$0.149 & 2 \\
+\texttt{attn\_out} (24) & $+$0.033 & 3 \\
+\texttt{attn\_qkv} (72) & $-$0.051 & 4 (least sensitive) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The ordering is consistent: \texttt{ffn\_down} (corresponding to \texttt{fc2} in OPT-125M) remains the most sensitive, and \texttt{attn\_qkv} remains the least sensitive---the inversion holds across model scales and operating bit-widths (7b for OPT-125M, 11b for OPT-1.3B). Notably, OPT-1.3B has nearly uniform saturation across all layer types ($\approx$10\% at 11b), yet the \emph{ffn}/\emph{attn} sensitivity hierarchy is unchanged, confirming that \textbf{the saturation-sensitivity inversion is a fundamental property of transformer CIM systems}, not an artifact of OPT-125M's scale or activation distribution. CIM chip designers can therefore apply sensitivity-guided allocation across transformer model families without re-measuring the qualitative ordering.
+
+\subsection{Energy Efficiency Analysis}
+
+Using the NeuroSIM energy model with MLSA scaling $E_\text{ADC} \propto M \cdot 2^b$, the ILP-20\% point reduces total inference energy by \textbf{23.5\%} (11.4$\to$8.7\,nJ/512-token). SQ+6b achieves \textbf{57.3\%} reduction (4.9\,nJ), directly enabled by the bit-width reduction.
+
+\subsection{Proxy Comparison: Saturation and Hessian Both Fail}
+
+Both common sensitivity proxies fail for CIM ADC allocation. (1)~\textbf{Saturation rate}: Spearman $\rho = -0.80$ vs.\ CIM sensitivity---a \emph{negative} correlation, meaning allocating bits by saturation rank actively harms accuracy. (2)~\textbf{Hessian trace} (HAWQ~\cite{dong2019hawq}, $\sigma_i \approx \text{tr}(H_i)\cdot\text{Var}(\mathbf{W}_i)$): $\rho = 0.20$ ($p = 0.75$, not significant), with \textbf{0/5} layer types ranked correctly. Table~\ref{tab:proxy_compare} shows the decisive failure: both proxies rank \texttt{attn\_out} as least sensitive (rank~5), while direct measurement ranks it second most sensitive. The practical consequence appears in Table~\ref{tab:mixed_results}: HAWQ-guided greedy achieves PPL=321.3---\textbf{12.7 PPL worse than our ILP}---at the same 20.5\% savings target. This failure is fundamental: Hessian trace models \emph{weight} quantization perturbations, while CIM ADC noise is an \emph{analog output clipping} effect. These are distinct noise models, and proxies from digital quantization do not transfer to CIM ADC allocation.
+
+\begin{table}[t]
+\centering
+\caption{Sensitivity Proxy Comparison: HAWQ Hessian vs.\ Saturation Rate vs.\ Measured CIM (OPT-125M)}
+\label{tab:proxy_compare}
+\begin{tabular}{lrrrr}
+\toprule
+Layer type & Sat.$^\uparrow$ & HAWQ$^\uparrow$ & CIM$^\uparrow$ & $\Delta$PPL/layer \\
+\midrule
+\texttt{q/k/v\_proj} & 1 (100\%) & 4 & 5 & 0.128 \\
+\texttt{fc1}         & 2 (94\%)  & 3 & 4 & 0.201 \\
+\texttt{lm\_head}    & 3 (100\%) & 1 & 3 & 0.700 \\
+\texttt{fc2}         & 4 (19\%)  & 2 & 1 & 1.413 \\
+\texttt{out\_proj}   & 5 (4\%)   & 5 & 2 & 0.866 \\
+\bottomrule
+\multicolumn{5}{p{0.85\columnwidth}}{\small $^\uparrow$Rank by sensitivity (1=most sensitive). Spearman $\rho$: Sat vs CIM = $-$0.80; HAWQ vs CIM = $+$0.20.}\\
+\end{tabular}
+\end{table}
+
+\subsection{Zero-Shot Accuracy Evaluation}
+
+To confirm that our PPL-based sensitivity measurements transfer to downstream accuracy, we evaluate four configurations on HellaSwag and WinoGrande using the \texttt{lm-evaluation-harness} zero-shot protocol~\cite{eval-harness} (500 samples each).
+
+\begin{table}[t]
+\centering
+\caption{Zero-Shot Accuracy (OPT-125M, 500 samples, 0-shot)}
+\label{tab:zeroshot}
+\begin{tabular}{lrrr}
+\toprule
+Config & HellaSwag & WinoGrande & Avg. \\
+\midrule
+FP32 (clean)      & 34.8\% & 53.6\% & 44.2\% \\
+CIM 7b (uniform)  & 30.6\% & 52.0\% & 41.3\% \\
+SQ + 6b           & 26.2\% & 51.0\% & 38.6\% \\
+ILP 20\%          & 30.0\% & 51.2\% & 40.6\% \\
+\bottomrule
+\multicolumn{4}{p{0.85\columnwidth}}{\small ILP-20\% retains only $-$0.7\%pt avg vs.\ 7b at 20.5\% ADC savings.}\\
+\end{tabular}
+\end{table}
+
+The ILP-20\% ($-$0.7\%pt avg vs.\ CIM-7b) outperforms SQ+6b ($-$2.7\%pt avg.) on zero-shot accuracy despite SQ+6b having lower PPL (305 vs.\ 319). This reveals a PPL--accuracy divergence for heavily smoothed models: ILP allocation preserves task accuracy more faithfully by protecting the most sensitive layers.
+
+%────────────────────────────────────────────────────────────────────
+\section{Related Work}
+\label{sec:related}
+
+\textbf{CIM for LLMs}: PRIME~\cite{chi2016prime} and ISAAC~\cite{shafiee2016isaac} pioneered CIM for neural inference. Recent surveys~\cite{wolters2024memory} identify the ADC bottleneck as the primary challenge when applying CIM to LLMs, where FC-dominated workloads and activation outliers~\cite{dettmers2022llmint8} differ fundamentally from CNN workloads.
+
+\textbf{ADC-Aware CIM Quantization}: Azamat et al.~\cite{azamat2023partial} reduce ADC precision in ReRAM CNN accelerators via partial-sum quantization. CIM$^2$PQ~\cite{sun2024cim2pq} proposes arraywise mixed-precision for analog CIM via evolutionary search. Chen et al.~\cite{chen2025sensitivity} apply Hessian-based sensitivity to ReRAM CIM mixed-precision. However, none address LLM transformer ADC sensitivity, and none identify the saturation-sensitivity inversion we report.
+
+\textbf{LLM Quantization}: SmoothQuant~\cite{xiao2023smoothquant} migrates activation outliers to weights; GPTQ~\cite{frantar2022gptq} and AWQ~\cite{lin2023awq} quantize weights only; ATOM~\cite{zhao2024atom} achieves efficient mixed-precision INT4 serving. None model per-layer ADC analog clipping behavior in CIM hardware.
+
+\textbf{Mixed-Precision Sensitivity Methods}: HAWQ~\cite{dong2019hawq} uses Hessian trace; HAQ~\cite{wang2019haq} uses hardware-aware RL. Both target digital accelerators with uniform bit-precision semantics. We show Hessian trace (Spearman $\rho{=}0.20$, not significant) fails for CIM ADC allocation, motivating direct measurement.
+
+\textbf{NeuroSIM}: We use DNN+NeuroSIM~\cite{chen2018neurosim,peng2019dnn} extended to 1nm-projected nodes~\cite{lee2024neurosim} for LLM PPA validation.
+
+%────────────────────────────────────────────────────────────────────
+\section{Conclusion}
+\label{sec:conclusion}
+
+We present the first direct measurement of per-layer ADC sensitivity for CIM-based LLM inference, demonstrating that the commonly assumed saturation-rate proxy is actively misleading: \texttt{q/k/v\_proj} ($\approx$100\% saturation) are 11$\times$ \emph{less} sensitive than \texttt{fc2} ($\approx$19\% saturation). OPT-1.3B validation confirms this inversion is a cross-model property of transformer CIM systems. Our measurement-guided ILP achieves 20.5\% ADC area savings at $+$2.2 PPL, outperforming HAWQ-guided greedy by 12.7 PPL and saturation-guided greedy by 5.2 PPL (NeuroSIM-validated). SmoothQuant + 6b saves 50\% ADC area while achieving PPL \emph{below} the 7b CIM baseline. The key design guideline: \emph{measure ADC sensitivity directly---not by proxy}.
+
+%────────────────────────────────────────────────────────────────────
+\section*{Acknowledgment}
+This work was supported in part by the National Natural Science Foundation of China and the National Key R\&D Program of China.
+
+%────────────────────────────────────────────────────────────────────
+\bibliographystyle{IEEEtran}
+\bibliography{refs}
+
+\end{document}

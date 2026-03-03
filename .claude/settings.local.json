@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(export HF_ENDPOINT=https://hf-mirror.com)",
+      "Bash(python3 llm_inference.py --model gpt2 --task all --adc_bits 7 --num_calib_batches 2 --num_eval_batches 5 --output_dir ./results/gpt2_fixed --device cpu)",
+      "Bash(export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/home/ubuntu/.local/bin)",
+      "Bash(python3 llm_inference.py --model gpt2 --task smooth --adc_bits 7 --num_calib_batches 2 --num_eval_batches 5 --output_dir ./results/smoke_test --device cpu)",
+      "Bash(python3 llm_inference.py --model gpt2 --task baseline --adc_bits 12 --num_calib_batches 2 --num_eval_batches 5 --output_dir ./results/smoke_test --device cpu)",
+      "Bash(python3 -c \":*)",
+      "Bash(python3 llm_inference.py --model gpt2 --task baseline --adc_bits 7 --num_calib_batches 4 --num_eval_batches 10 --output_dir ./results/smoke_test --device cpu)"
+    ],
+    "defaultMode": "bypassPermissions"
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "sq_6b": {
+    "ppl": 320.2902174352812,
+    "acc": {
+      "hellaswag": 0.262,
+      "winogrande": 0.51
+    }
+  },
+  "ilp_20": {
+    "ppl": 319.8229931611956,
+    "acc": {
+      "hellaswag": 0.3,
+      "winogrande": 0.512
+    }
+  },
+  "clean": {
+    "ppl": 40.44232308502239,
+    "acc": {
+      "hellaswag": 0.348,
+      "winogrande": 0.536
+    }
+  },
+  "cim_7b": {
+    "ppl": 319.77879765445135,
+    "acc": {
+      "hellaswag": 0.306,
+      "winogrande": 0.52
+    }
+  }
+}

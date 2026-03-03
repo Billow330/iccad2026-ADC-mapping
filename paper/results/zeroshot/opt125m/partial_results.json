@@ -1,0 +1,16 @@
+{
+  "clean": {
+    "ppl": 40.44,
+    "acc": {
+      "hellaswag": 0.348,
+      "winogrande": 0.536
+    }
+  },
+  "cim_7b": {
+    "ppl": 319.78,
+    "acc": {
+      "hellaswag": 0.306,
+      "winogrande": 0.52
+    }
+  }
+}

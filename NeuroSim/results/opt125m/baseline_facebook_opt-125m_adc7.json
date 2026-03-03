@@ -1,0 +1,8 @@
+{
+  "model": "facebook/opt-125m",
+  "adc_bits": 7,
+  "ppl_clean": 36.19290390090656,
+  "ppl_cim": 310.9830419787836,
+  "ppl_delta": 274.79013807787703,
+  "mean_sat_rate": 0.035250412965502124
+}

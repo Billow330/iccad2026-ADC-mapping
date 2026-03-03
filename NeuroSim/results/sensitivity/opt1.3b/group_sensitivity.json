@@ -1,0 +1,47 @@
+{
+  "model": "facebook/opt-1.3b",
+  "nominal_bits": 11,
+  "probe_bits": 10,
+  "baseline_ppl": 708.9932570152814,
+  "note": "Relative sensitivity: \u0394PPL when dropping 11b\u219210b per group",
+  "attn_qkv": {
+    "ltype": "attn_qkv",
+    "n_layers": 72,
+    "ppl": 705.3453183711473,
+    "delta_ppl": -3.647938644134115,
+    "delta_per_layer": -0.05066581450186271,
+    "sat_rate": 0.10432509814749097
+  },
+  "attn_out": {
+    "ltype": "attn_out",
+    "n_layers": 24,
+    "ppl": 709.7896661843674,
+    "delta_ppl": 0.7964091690860187,
+    "delta_per_layer": 0.03318371537858411,
+    "sat_rate": 0.10388260867430879
+  },
+  "ffn_up": {
+    "ltype": "ffn_up",
+    "n_layers": 24,
+    "ppl": 712.5571033728868,
+    "delta_ppl": 3.563846357605371,
+    "delta_per_layer": 0.14849359823355712,
+    "sat_rate": 0.10324332875576835
+  },
+  "ffn_down": {
+    "ltype": "ffn_down",
+    "n_layers": 24,
+    "ppl": 723.8573172983827,
+    "delta_ppl": 14.864060283101253,
+    "delta_per_layer": 0.6193358451292189,
+    "sat_rate": 0.10360211800669641
+  },
+  "lm_head": {
+    "ltype": "lm_head",
+    "n_layers": 1,
+    "ppl": 698.1245277457974,
+    "delta_ppl": -10.868729269483993,
+    "delta_per_layer": -10.868729269483993,
+    "sat_rate": 0.10385445872470747
+  }
+}

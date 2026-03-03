@@ -1,0 +1,41 @@
+# Model cache (too large, ~7.2GB — see README for download instructions)
+NeuroSim/model_cache/
+
+# LaTeX build artifacts
+paper/*.aux
+paper/*.log
+paper/*.blg
+paper/*.bbl
+paper/*.out
+paper/*.toc
+paper/*.fls
+paper/*.fdb_latexmk
+paper/*.synctex.gz
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Temp files
+*.tmp
+*.swp
+*~
+
+# Compiled objects
+*.o
+*.so
+*.a
+
+# Pip stray files (e.g. "=4.40.0")
+=*
+
+# NeuroSIM binary
+NeuroSim/NeuroSIM/main
