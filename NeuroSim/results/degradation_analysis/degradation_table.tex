@@ -1,0 +1,18 @@
+\begin{table}[t]
+\centering
+\caption{Precision Degradation Chain: FP32 to CIM Mixed-Precision (WikiText-2 PPL)}
+\label{tab:degradation}
+\begin{tabular}{lrrl}
+\toprule
+Stage & OPT-125M & OPT-1.3B & Dominant noise \\
+\midrule
+FP32 (clean)              & 40.4  & 14.6  & -- \\
++ Weight quant (8b)       & 42.1  & 15.1  & Digital quant \\
++ CIM ADC (7b)            & 306.4 & 709.0 & ADC clipping \\
+\midrule
+SQ + CIM 6b              & \textbf{305.0} & --    & SQ mitigates \\
+ILP 20\% (sens.-guided)  & 308.6 & --    & Mixed-precision \\
+\bottomrule
+\multicolumn{4}{p{0.85\columnwidth}}{\small ADC analog clipping dominates degradation (>99\% of total PPL increase). SmoothQuant pre-processing enables 6-bit ADC to match 7-bit accuracy.}\\
+\end{tabular}
+\end{table}

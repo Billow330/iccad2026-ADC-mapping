@@ -1,13 +1,3 @@
-@inproceedings{radford2019language,
-  title={Language models are unsupervised multitask learners},
-  author={Radford, Alec and Wu, Jeffrey and Child, Rewon and Luan, David and Amodei, Dario and Sutskever, Ilya},
-  booktitle={OpenAI Blog},
-  volume={1},
-  number={8},
-  pages={9},
-  year={2019}
-}
-
 @article{zhang2022opt,
   title={Opt: Open pre-trained transformer language models},
   author={Zhang, Susan and Roller, Stephen and Goyal, Naman and Artetxe, Mikel and Chen, Moya and Chen, Shuohui and Dewan, Christopher and Diab, Mona and Li, Xian and Lin, Xi Victoria and others},
@@ -27,12 +17,9 @@
 @inproceedings{shafiee2016isaac,
   title={Isaac: A convolutional neural network accelerator with in-situ analog arithmetic in crossbars},
   author={Shafiee, Ali and Nag, Anirban and Muralimanohar, Naveen and Balasubramonian, Rajeev and Strachan, John Paul and Hu, Miao and Williams, R Stanley and Srikumar, Vivek},
-  booktitle={ACM SIGARCH Computer Architecture News},
-  volume={44},
-  number={3},
+  booktitle={ACM/IEEE 43rd Annual International Symposium on Computer Architecture (ISCA)},
   pages={14--26},
-  year={2016},
-  publisher={ACM New York, NY, USA}
+  year={2016}
 }
 
 @article{chen2018neurosim,
@@ -64,18 +51,18 @@
   organization={PMLR}
 }
 
-@article{frantar2022gptq,
-  title={Gptq: Accurate post-training quantization for generative pre-trained transformers},
+@inproceedings{frantar2022gptq,
+  title={{GPTQ}: Accurate Post-Training Quantization for Generative Pre-Trained Transformers},
   author={Frantar, Elias and Ashkboos, Saleh and Hoefler, Torsten and Alistarh, Dan},
-  journal={arXiv preprint arXiv:2210.17323},
-  year={2022}
+  booktitle={International Conference on Learning Representations (ICLR)},
+  year={2023}
 }
 
-@article{lin2023awq,
-  title={Awq: Activation-aware weight quantization for llm compression and acceleration},
-  author={Lin, Ji and Tang, Jiaming and Tang, Haotian and Yang, Shang and Dang, Xingyu and Han, Song},
-  journal={arXiv preprint arXiv:2306.00978},
-  year={2023}
+@inproceedings{lin2023awq,
+  title={{AWQ}: Activation-Aware Weight Quantization for On-Device {LLM} Compression and Acceleration},
+  author={Lin, Ji and Tang, Jiaming and Tang, Haotian and Yang, Shang and Chen, Wei-Ming and Wang, Wei-Chen and Xiao, Guangxuan and Dang, Xingyu and Gan, Chuang and Han, Song},
+  booktitle={Proceedings of Machine Learning and Systems (MLSys)},
+  year={2024}
 }
 
 @inproceedings{merity2017pointer,
@@ -83,29 +70,6 @@
   author={Merity, Stephen and Xiong, Caiming and Bradbury, James and Socher, Richard},
   booktitle={International Conference on Learning Representations},
   year={2017}
-}
-
-@article{song2022pipelined,
-  title={Pipelined data-parallel cpu/gpu scheduling for multi-dnn real-time inference on heterogeneous mpsocs},
-  author={Song, Hyoukjun and Ravi, Srinidhi and Jiang, Liangpeng},
-  journal={arXiv preprint arXiv:2204.09604},
-  year={2022}
-}
-
-@article{bondarenko2021understanding,
-  title={Understanding and overcoming the challenges of efficient transformer quantization},
-  author={Bondarenko, Yelysei and Nagel, Markus and Blankevoort, Tijmen},
-  journal={arXiv preprint arXiv:2109.12948},
-  year={2021}
-}
-
-@inproceedings{wei2022outlier,
-  title={Outlier suppression: Pushing the limit of low-bit transformer language models},
-  author={Wei, Xiuying and Zhang, Yunchen and Zhang, Xiangguo and Gong, Ruihao and Zhang, Shanghang and Zhang, Qi and Yu, Fengwei and Liu, Xianglong},
-  booktitle={Advances in Neural Information Processing Systems},
-  volume={35},
-  pages={17402--17414},
-  year={2022}
 }
 
 @inproceedings{dong2019hawq,
@@ -133,13 +97,6 @@
   pages={2306--2319},
   year={2021},
   publisher={IEEE}
-}
-
-@inproceedings{hu2021exploring,
-  title={Exploring the regularity of sparse structure in convolutional neural networks},
-  author={Hu, Yihui and Gao, Peng and Du, Zhihua and Lian, Xiaolong and Cui, Yiwen and Tang, Hao and Sun, Zhenglin and Zhao, Yunpeng and Gong, Jianfeng},
-  booktitle={arXiv preprint arXiv:1705.08922},
-  year={2021}
 }
 
 @article{wolters2024memory,
@@ -189,19 +146,47 @@
   year={2025}
 }
 
-@inproceedings{zhao2024atom,
-  title={Atom: Low-Bit Quantization for Efficient and Accurate {LLM} Serving},
-  author={Zhao, Yilong and Lin, Chien-Yu and Zhu, Kan and Ye, Zihao and Chen, Lequn and Zheng, Size and Ceze, Luis and Krishnamurthy, Arvind and Chen, Tianqi and Kasikci, Baris},
-  booktitle={Proceedings of Machine Learning and Systems},
-  volume={6},
-  pages={196--209},
-  year={2024}
+
+
+@article{wan2025nature_mixed_cim,
+  title={A mixed-precision memristor and {SRAM} compute-in-memory {AI} processor},
+  author={Wan, Weier and Rajendran, Rajkumar and others},
+  journal={Nature},
+  volume={639},
+  number={8055},
+  pages={617--623},
+  year={2025},
+  doi={10.1038/s41586-025-08639-2},
+  publisher={Nature Publishing Group}
 }
 
-@article{eval-harness,
-  title={A Framework for Few-Shot Language Model Evaluation},
-  author={Gao, Leo and others},
-  journal={arXiv preprint arXiv:2110.08634},
-  year={2021},
-  url={https://arxiv.org/abs/2110.08634}
+@article{mxformer2025,
+  title={{MXFormer}: A Microscaling Floating-Point Charge-Trap Transistor Compute-in-Memory Transformer Accelerator},
+  author={Danouchi, Karim and Sharifi, Mohammad Mehdi and Gonugondla, Sujan Kumar and Shanbhag, Naresh R.},
+  journal={arXiv preprint arXiv:2602.12480},
+  year={2026}
+}
+
+
+@article{flexcim2025,
+  title={Accelerating {LLM} Inference with Flexible {N:M} Sparsity via A Fully Digital Compute-in-Memory Accelerator},
+  author={Guo, Jingbo and others},
+  journal={arXiv preprint arXiv:2504.14365},
+  year={2025}
+}
+
+
+@inproceedings{yan2023nvcim,
+  title={Improving Realistic Worst-Case Performance of {NVCiM DNN} Accelerators Through Training with Right-Censored {Gaussian} Noise},
+  author={Yan, Zheyu and Qin, Yifan and Wen, Wujie and Hu, X. Sharon and Shi, Yiyu},
+  booktitle={Proc. IEEE/ACM International Conference on Computer-Aided Design (ICCAD)},
+  pages={1--9},
+  year={2023}
+}
+
+@article{p3llm2025,
+  title={{P3-LLM}: An Integrated {NPU-PIM} Accelerator for {LLM} Inference Using Hybrid Numerical Formats},
+  author={Lim, Jaehoon and others},
+  journal={arXiv preprint arXiv:2511.06838},
+  year={2025}
 }

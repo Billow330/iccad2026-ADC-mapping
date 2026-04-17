@@ -1,0 +1,42 @@
+[
+  {
+    "target_pct": 5,
+    "bf_pred_dppl": 2.4174559972382212,
+    "bf_savings": 7.426661323248506
+  },
+  {
+    "target_pct": 10,
+    "bf_pred_dppl": 4.617805831052181,
+    "bf_savings": 22.279983969745565
+  },
+  {
+    "target_pct": 15,
+    "bf_pred_dppl": 4.617805831052181,
+    "bf_savings": 22.279983969745565
+  },
+  {
+    "target_pct": 20,
+    "bf_pred_dppl": 4.617805831052181,
+    "bf_savings": 22.279983969745565
+  },
+  {
+    "target_pct": 25,
+    "bf_pred_dppl": 7.035261828290402,
+    "bf_savings": 29.70664529299407
+  },
+  {
+    "target_pct": 30,
+    "bf_pred_dppl": 7.735654731364889,
+    "bf_savings": 30.32553373659812
+  },
+  {
+    "target_pct": 40,
+    "bf_pred_dppl": 11.653067659342582,
+    "bf_savings": 43.00135784519227
+  },
+  {
+    "target_pct": 50,
+    "bf_pred_dppl": 17.888765459968,
+    "bf_savings": 50.081624685300376
+  }
+]

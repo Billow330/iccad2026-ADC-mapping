@@ -1,0 +1,9 @@
+Stage,OPT-125M_PPL,OPT-1.3B_PPL,Notes
+FP32 (clean),40.4,14.6,Reference
++ Weight Quant (8b),42.1,15.1,Digital quant only
++ CIM ADC (7b),306.4,709.0,Analog clipping
++ CIM ADC (6b),315.3,,More aggressive
+SQ + CIM 7b,315.1,,SmoothQuant pre-proc
+SQ + CIM 6b,305.0,,SQ + reduced ADC
+ILP 20% (sens-guided),308.6,,Mixed-precision
+SQ + ILP 20%,309.4,,Best combined

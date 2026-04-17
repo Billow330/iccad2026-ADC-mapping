@@ -1,0 +1,9 @@
+[
+  {
+    "config": "SQ + 6b",
+    "adc_savings_pct": 49.99999999999996,
+    "energy_savings_pct": 59.72530598259213,
+    "latency_savings_pct": 30.516077458212763,
+    "ppl": 305.0
+  }
+]

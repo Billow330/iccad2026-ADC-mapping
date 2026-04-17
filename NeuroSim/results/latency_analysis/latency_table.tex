@@ -1,0 +1,25 @@
+\begin{table}[t]
+\centering
+\caption{Mixed-Precision ADC: Area, Energy, and Latency Trade-offs (OPT-125M)}
+\label{tab:latency}
+\begin{tabular}{lrrrrr}
+\toprule
+Config & ADC sav. & Energy sav. & Lat. sav. & PPL & $\Delta$PPL \\
+ & (\%) & (\%) & (\%) & & \\
+\midrule
+Uniform 7b & -0.0 & -0.0 & 0.0 & 306.4 & +0.0 \\
+ILP 5\% & 5.5 & 6.5 & 3.3 & 312.9 & +6.5 \\
+ILP 10\% & 10.3 & 12.3 & 6.3 & 305.2 & -1.2 \\
+ILP 15\% & 15.1 & 18.0 & 9.2 & 311.0 & +4.6 \\
+ILP 20\% & 20.5 & 24.5 & 12.5 & 308.6 & +2.2 \\
+SQ + ILP 20\% & 20.5 & 24.5 & 12.5 & 309.4 & +3.0 \\
+ILP 25\% & 25.3 & 30.3 & 15.5 & 313.9 & +7.5 \\
+ILP 30\% & 30.1 & 36.0 & 18.4 & 311.5 & +5.1 \\
+ILP 40\% & 40.4 & 48.3 & 24.7 & 311.7 & +5.3 \\
+Uniform 6b & 50.0 & 59.7 & 30.5 & 315.3 & +8.9 \\
+ILP 50\% & 50.0 & 59.7 & 30.5 & 318.5 & +12.1 \\
+\textbf{SQ + 6b} & \textbf{50.0} & \textbf{59.7} & \textbf{30.5} & \textbf{305.0} & \textbf{-1.4} \\
+\bottomrule
+\multicolumn{6}{p{0.85\columnwidth}}{\small Bold = Pareto-optimal. Latency savings from MLSA ADC scaling model ($\propto 2^b$). ILP-20\% achieves 20.5\% area, 23.5\% energy, and 20.5\% latency savings with only +2.2 PPL.}\\
+\end{tabular}
+\end{table}

@@ -1,7 +1,11 @@
-# Model cache (too large, ~7.2GB — see README for download instructions)
+# ── Model weights (download via HuggingFace, see README) ──
 NeuroSim/model_cache/
 
-# LaTeX build artifacts
+# ── Chat / AI assistant history ──
+chat_history/
+.claude/
+
+# ── LaTeX build artifacts ──
 paper/*.aux
 paper/*.log
 paper/*.blg
@@ -11,8 +15,27 @@ paper/*.toc
 paper/*.fls
 paper/*.fdb_latexmk
 paper/*.synctex.gz
+NeuroSim/texput.log
 
-# Python cache
+# ── Compiled PDF and submission packages (regeneratable) ──
+paper/main.pdf
+paper/main.pdf.bak_current
+paper/*.tar.gz
+paper/*.zip
+
+# ── LaTeX backup files ──
+paper/*.bak_*
+paper/*.backup_*
+paper/*.pre_*
+paper/fantaog.code-workspace*
+
+# ── Intermediate PDF versions ──
+paper/iccad_v2_*.pdf
+
+# ── Preview PNGs (regeneratable from PDFs) ──
+paper/*_preview.png
+
+# ── Python cache ──
 __pycache__/
 *.pyc
 *.pyo
@@ -20,22 +43,34 @@ __pycache__/
 .Python
 *.egg-info/
 
-# OS
+# ── Vendored libraries (install via pip) ──
+NeuroSim/pytorch-quantization/
+NeuroSim/Documents/
+
+# ── Compiled C/C++ objects and binaries ──
+*.o
+*.so
+*.a
+NeuroSim/NeuroSIM/main
+
+# ── OS files ──
 .DS_Store
 Thumbs.db
 
-# Temp files
+# ── Temp / swap files ──
 *.tmp
 *.swp
 *~
 
-# Compiled objects
-*.o
-*.so
-*.a
-
-# Pip stray files (e.g. "=4.40.0")
+# ── pip stray files ──
 =*
 
-# NeuroSIM binary
-NeuroSim/NeuroSIM/main
+# ── PyTorch scale checkpoints in smoke/legacy results ──
+NeuroSim/results/smoke_*/smooth_scales_*.pt
+NeuroSim/results/smoke_bal/smooth_scales_*.pt
+NeuroSim/results/smoke_p99/smooth_scales_*.pt
+NeuroSim/results/smoke_sat_lambda/smooth_scales_*.pt
+NeuroSim/results/smoke_v2/smooth_scales_*.pt
+NeuroSim/results/gpt2/smooth_scales_*.pt
+NeuroSim/results/gpt2_p99/smooth_scales_*.pt
+NeuroSim/results/opt125m/smooth_scales_*.pt
