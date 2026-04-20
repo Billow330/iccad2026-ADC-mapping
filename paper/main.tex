@@ -446,10 +446,6 @@ The proxy ranking analysis (Fig.~\ref{fig:ppa_proxy}) further confirms that satu
   \label{fig:ppa_proxy}
 \end{figure}
 
-\textit{Downstream task accuracy.}
-We evaluate on five zero-shot tasks (570--3{,}000 samples each) with 95\% bootstrap confidence intervals (Fig.~\ref{fig:downstream}).
-ILP-20\% preserves CIM-7b accuracy within the confidence interval on all tasks ($|\overline{\Delta}|$\,=\,0.2\,pp).
-
 \begin{figure}[t]
   \centering
   \includegraphics[width=\columnwidth]{fig_downstream_ci}
@@ -457,10 +453,12 @@ ILP-20\% preserves CIM-7b accuracy within the confidence interval on all tasks (
   \label{fig:downstream}
 \end{figure}
 
-\subsection{Cross-Model Validation and Noise Robustness}
-
-Table~\ref{tab:cross_arch} reports sensitivity-ordering checks across four models and full allocation results on OPT-1.3B.
-OPT-1.3B allocation confirms the practical value at scale: profiling-guided ILP outperforms saturation-ILP at both 20\% and 30\% savings.
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\columnwidth]{fig_robustness_original}
+  \caption{Sensitivity robustness under six enhanced CIM noise configurations (thermal + device variation). $W_{fc2}$ remains the most sensitive non-$W_{head}$ layer in 5/7 settings; under the strongest device variation ($\sigma_\text{dev}=0.03$), $W_{fc2}$ exhibits the largest positive $\Delta$PPL ($+$2.86/layer).}
+  \label{fig:noise_robust}
+\end{figure}
 
 \begin{table}[t]
 \centering
@@ -488,16 +486,18 @@ Qwen2-7B    & Qwen2 & 8$\to$7 & $W_{fc1}$ & $W_{out}$ & Yes \\
 \end{tabular}
 \end{table}
 
+\textit{Downstream task accuracy.}
+We evaluate on five zero-shot tasks (570--3{,}000 samples each) with 95\% bootstrap confidence intervals (Fig.~\ref{fig:downstream}).
+ILP-20\% preserves CIM-7b accuracy within the confidence interval on all tasks ($|\overline{\Delta}|$\,=\,0.2\,pp).
+
+\subsection{Cross-Model Validation and Noise Robustness}
+
+Table~\ref{tab:cross_arch} reports sensitivity-ordering checks across four models and full allocation results on OPT-1.3B.
+OPT-1.3B allocation confirms the practical value at scale: profiling-guided ILP outperforms saturation-ILP at both 20\% and 30\% savings.
 We further augment the ADC clipping model with additive thermal noise and multiplicative device variation (six configurations).
 $W_{fc2}$ remains the most sensitive non-$W_{head}$ layer in 5/7 settings (Fig.~\ref{fig:noise_robust}); the ILP assignment is stable in 5/7 configurations (Table~\ref{tab:robustness}).
 
-\begin{figure}[t]
-  \centering
-  \includegraphics[width=\columnwidth]{fig_robustness_original}
-  \caption{Sensitivity robustness under six enhanced CIM noise configurations (thermal + device variation). $W_{fc2}$ remains the most sensitive non-$W_{head}$ layer in 5/7 settings; under the strongest device variation ($\sigma_\text{dev}=0.03$), $W_{fc2}$ exhibits the largest positive $\Delta$PPL ($+$2.86/layer).}
-  \label{fig:noise_robust}
-\end{figure}
-
+\FloatBarrier
 %────────────────────────────────────────────────────────────────────
 \section{Conclusion}
 \label{sec:conclusion}
