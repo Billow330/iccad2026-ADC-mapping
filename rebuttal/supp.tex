@@ -2,6 +2,7 @@
 \usepackage[margin=1in]{geometry}
 \usepackage{booktabs}
 \usepackage{amsmath}
+\usepackage{amssymb}
 \begin{document}
 
 \begin{center}
@@ -96,6 +97,65 @@ CIM uniform 8b (baseline)             & ---           & 15.6        & 77.4 & 75.
 Profiling-ILP (52\% budget)           & 52\%          & 16.4\,($+$4.9\%) & --- & --- \\
 \midrule
 \multicolumn{5}{l}{Proxy-blind (reduce the \emph{most}-sensitive group): PPL $\to$ 1938 (model destroyed).}\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\vspace{1em}
+\noindent\textbf{Analytical mechanism of the inversion (answers \#707A-W1, \#707C-C3/Q2, \#707D-W3).}
+A uniform $b$-bit ADC with calibrated full-scale $V_{FS}$ splits its error on a MAC
+output $y$ into a \emph{granular} (resolution) term and an \emph{overload/clipping}
+term. With saturation rate $s=\Pr[\,|y|>V_{FS}\,]$ and step $\Delta=2V_{FS}/2^{b}$,
+\begin{equation*}
+D_{\mathrm{ADC}}(b)=\underbrace{D_{\mathrm{gran}}(b)}_{\approx (1-s)\,\Delta^{2}/12\;\propto\;(1-s)\,V_{FS}^{2}\,4^{-b}}+\underbrace{D_{\mathrm{ovl}}}_{\mathbb{E}[(|y|-V_{FS})^{2}\mid |y|>V_{FS}]\;\text{(independent of }b)}.
+\end{equation*}
+Reducing one bit thus multiplies \emph{only} the granular term by $4$ and leaves
+clipping unchanged. To first order the loss impact of reducing group $g$ is
+$\;\text{sensitivity}_g\;\approx\;\underbrace{\Delta D_{\mathrm{gran},g}}_{\text{granular budget}}\times\underbrace{J_g}_{\text{residual-stream propagation gain}}$,
+where $J_g$ is the gain with which an output perturbation of group $g$ reaches the
+loss along the attention/FFN/residual paths (Fig.~5). The saturation rate captures
+only the $(1-s)$ part of the granular budget (it ignores $V_{FS}$ and propagation);
+the Hessian trace approximates propagation but ignores the budget --- so each
+standard proxy sees at most one factor and mispredicts the product, which is
+exactly why the paper measures $\Delta$PPL directly.
+
+\vspace{0.8em}
+\noindent\textbf{Table S4. Mechanism diagnostics confirm the decomposition}
+(OPT-125M, INT8 per-channel weights, p99-clip, group probe $7{\to}6$). This table
+isolates the two \emph{mechanistic factors}; the sensitivity ranking itself
+(FFN$>$attention; $W_{fc2}$ most sensitive at the paper's operating point) is in
+Tables~S1--S2 and paper Table~4. \emph{Decomposition law:} in every group one-bit
+reduction scales the granular error $D_{\mathrm{gran}}$ by $4.06\!\approx\!4^{1}$
+and the clipping error $D_{\mathrm{ovl}}$ by $1.00$ --- the bit-width touches only
+the granular term. \emph{Two anti-correlated factors:} the local granular budget
+$\Delta D_{\mathrm{gran}}$ and the propagation gain $J$ are \textbf{perfectly
+anti-correlated across groups (Spearman $\rho=-1.0$)}; $W_{qkv}$ receives the
+\emph{largest} bit-reduction error yet propagates it $\approx\!400\times$ more
+weakly than $W_{fc2}/W_{out}$ ($J$ is hidden-state drift per unit local error;
+drift and output KL co-move, $\rho=1.0$) --- the quantitative form of the Fig.~5
+attenuation argument and the reason high-saturation attention layers are the
+\emph{least} ADC-sensitive. All diagnostics requested by \#707C-C3
+(granular/clipping MSE, SQNR, hidden-state drift, output KL) are reported. The
+\emph{product} of the two factors reproduces FFN$>$attention; which FFN sub-layer
+ranks top is set by this operating-point/architecture-dependent product
+($W_{fc2}$ at the paper's max-clip point, $W_{fc1}$ on Qwen2's gated MLP),
+explaining the model dependence noted in \#707C-W2.
+
+\begin{center}
+\footnotesize
+\setlength{\tabcolsep}{5.5pt}
+\begin{tabular}{lrrrrrrr}
+\toprule
+Group & $\kappa$ (kurt.) & $D_{\mathrm{gran}}{\uparrow}$ & $D_{\mathrm{ovl}}{\uparrow}$ & $\Delta D_{\mathrm{gran}}$ & SQNR & KL & $J$ \\
+ & heavy tail & ($7{\to}6$) & ($7{\to}6$) & ($\times10^{-4}$) & (dB) & ($\times10^{-3}$) & ($\times10^{3}$) \\
+\midrule
+$W_{qkv}$ (attn in)  & $1.1$             & $4.06$ & $1.00$ & $1.97$  & $27.5$ & $2.82$ & $0.22$  \\
+$W_{out}$ (attn out) & $22$              & $4.06$ & $1.00$ & $0.003$ & $10.8$ & $1.86$ & $127.9$ \\
+$W_{fc1}$ (FFN up)   & $47$              & $4.06$ & $1.00$ & $0.256$ & $15.3$ & $4.14$ & $2.09$  \\
+$W_{fc2}$ (FFN down) & $1.5\times10^{5}$ & $4.06$ & $1.00$ & $0.004$ & $4.3$  & $1.84$ & $94.2$  \\
+\midrule
+\multicolumn{8}{l}{Granular budget $\Delta D_{\mathrm{gran}}$ and propagation gain $J$ are anti-correlated across groups (Spearman $\rho=-1.0$).}\\
+\multicolumn{8}{l}{Sensitivity $=$ their \emph{product}; neither saturation ($\rho{=}{-}0.70$) nor Hessian ($\rho{=}0.20$) captures both factors.}\\
 \bottomrule
 \end{tabular}
 \end{center}

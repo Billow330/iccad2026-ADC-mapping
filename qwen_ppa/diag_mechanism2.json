@@ -1,0 +1,100 @@
+{
+  "baseline_ppl": 307.203,
+  "baseline_nll": 5.7275,
+  "fs_hw": 5.5843,
+  "groups": {
+    "attn_qkv": {
+      "s": 0.0014,
+      "kurtosis": 1.12,
+      "D_ovl_7b": 0.002054772410862409,
+      "D_gran_7b": 6.44359607801483e-05,
+      "sqnr_db": 27.46,
+      "D_ovl_6b": 0.0020526195974245056,
+      "D_gran_6b": 0.00026184172625023537,
+      "ovl_ratio_6to7": 0.999,
+      "gran_ratio_6to7": 4.064,
+      "dD_gran": 0.00019740576547008705,
+      "resid_drift": 0.04381,
+      "kl": 0.002822,
+      "dNLL": -0.00073,
+      "dPPL": -0.2256,
+      "J_drift": 221.9
+    },
+    "attn_out": {
+      "s": 0.0,
+      "kurtosis": 22.0,
+      "D_ovl_7b": 0.0007674143488488712,
+      "D_gran_7b": 8.669864352859078e-08,
+      "sqnr_db": 10.84,
+      "D_ovl_6b": 0.00076647197932255,
+      "D_gran_6b": 3.523477686144887e-07,
+      "ovl_ratio_6to7": 0.999,
+      "gran_ratio_6to7": 4.064,
+      "dD_gran": 2.656491250858979e-07,
+      "resid_drift": 0.03398,
+      "kl": 0.001856,
+      "dNLL": 0.00096,
+      "dPPL": 0.2941,
+      "J_drift": 127894.38
+    },
+    "ffn_up": {
+      "s": 0.0001,
+      "kurtosis": 47.02,
+      "D_ovl_7b": 0.008798067920078109,
+      "D_gran_7b": 8.342901006236153e-06,
+      "sqnr_db": 15.29,
+      "D_ovl_6b": 0.008784945217916241,
+      "D_gran_6b": 3.389855002279984e-05,
+      "ovl_ratio_6to7": 0.999,
+      "gran_ratio_6to7": 4.063,
+      "dD_gran": 2.5555649016563686e-05,
+      "resid_drift": 0.05332,
+      "kl": 0.00414,
+      "dNLL": 0.00385,
+      "dPPL": 1.1856,
+      "J_drift": 2086.41
+    },
+    "ffn_down": {
+      "s": 0.0,
+      "kurtosis": 145279.78,
+      "D_ovl_7b": 0.0014452960876183253,
+      "D_gran_7b": 1.159413684433993e-07,
+      "sqnr_db": 4.32,
+      "D_ovl_6b": 0.0014452754346065274,
+      "D_gran_6b": 4.7113023397939827e-07,
+      "ovl_ratio_6to7": 1.0,
+      "gran_ratio_6to7": 4.064,
+      "dD_gran": 3.5518886553599896e-07,
+      "resid_drift": 0.03345,
+      "kl": 0.001835,
+      "dNLL": 0.00071,
+      "dPPL": 0.2183,
+      "J_drift": 94167.37
+    }
+  },
+  "spearman_vs_dNLL": {
+    "saturation s": -0.4,
+    "kurtosis": 0.4,
+    "(1-s)": 0.2,
+    "resid_drift (J)": 0.4,
+    "(1-s)*resid_drift": 0.4,
+    "(1-s)*KL": 0.4
+  },
+  "spearman_vs_dPPL": {
+    "saturation s": -0.4,
+    "kurtosis": 0.4,
+    "(1-s)": 0.2,
+    "resid_drift (J)": 0.4,
+    "(1-s)*resid_drift": 0.4,
+    "(1-s)*KL": 0.4
+  },
+  "spearman_vs_kl": {
+    "saturation s": 0.6,
+    "kurtosis": -0.4,
+    "(1-s)": -0.8,
+    "resid_drift (J)": 1.0,
+    "(1-s)*resid_drift": 1.0,
+    "(1-s)*KL": 1.0
+  },
+  "note": "paper proxies vs measured sensitivity: saturation rho=-0.70, Hessian rho=0.20"
+}
