@@ -74,6 +74,16 @@ OPT-125M & $7{\to}4$ (3 seeds)   & $+0.67$ (mean) & $+0.063$ (mean) & 3/3 \\
 \end{tabular}
 \end{center}
 
+\vspace{0.6em}
+\noindent\textbf{Usable-baseline check (\#707D-Q1/C1).} A \emph{max-clip} ADC
+calibration (one of the paper's three schemes, Table~I) gives a usable OPT-125M
+operating point (8b, PPL~93). Re-profiling there reproduces the ordering
+emphatically: $W_{fc2}$ is the most sensitive group, and the FFN aggregate is
+strongly positive while the attention aggregate is $\approx$0/negative ($+21.5$ vs
+$-1.4$ $\Delta$PPL/layer at $8{\to}7$). With Qwen2-7B (PPL 15.6 vs clean ${\sim}$10),
+the FFN$>$attention ordering thus holds at operating points with substantially
+better language-modeling quality than the p99 stress-test.
+
 \vspace{1em}
 \noindent\begin{minipage}{\textwidth}
 \noindent\textbf{Table S3. Full profiling$\to$ILP$\to$PPA pipeline on Qwen2-7B at a

@@ -1,0 +1,21 @@
+{
+  "fp32": 42.51,
+  "int8_weights_only": 42.456,
+  "adc7_p99": 320.388,
+  "adc7_max": 96.72,
+  "adc8_max": 92.814,
+  "adc8_p99": 320.608,
+  "usable_point": {
+    "config": "adc8_max",
+    "ppl_base": 93.223,
+    "sensitivity_per_layer": {
+      "attn_qkv": -0.1121,
+      "attn_out": -2.633,
+      "ffn_up": 0.1389,
+      "ffn_down": 42.7671
+    },
+    "ffn_aggregate": 21.453,
+    "attn_aggregate": -1.3725,
+    "FFN_gt_attn": true
+  }
+}

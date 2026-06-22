@@ -35,24 +35,25 @@ this propagation — **so direct ΔPPL profiling is necessary**. The flow consum
 measured ΔPPL and is provably optimal (regret = 0, Table 2); FFN>attention is robust
 across probes/seeds (Table S2, ≈11× at 7→4).
 
-## CR-2. Baseline quality: the high PPL is a weight-quant floor, not an ADC artifact
+## CR-2. Baseline quality: the floor is orthogonal; the ordering holds at usable points
 *(#707C-C7, #707D-W1/C1/Q1)*
 
-The FP32→CIM gap is **dominated by INT8 weight quantization**, while **ADC adds only
-0.2 PPL** and is bit-insensitive (7b–10b baselines coincide within 0.2%, Sec.
-5.1/5.3). So the 306 PPL is **not** an ADC artifact, and cutting ADC area above any
-floor is a **separable** contribution.
+The high baseline PPL is a **CIM quantization floor orthogonal to our contribution**:
+per-layer ADC bit *allocation* only reallocates bits across layers under that floor,
+so our ADC-area savings are **separable** from baseline quality.
 
-**Does the ordering survive when the model is usable? Yes (#707D-Q1/C1).** On
-**Qwen2-7B, PPL 15.6 vs clean ~10** (far tighter than OPT-125M's 8×), FFN>attention
-holds and profiling-ILP saves **34% ADC area within ~1.6 pp** downstream (Table S3,
-Table 4). Being **structural** — *where* ADC noise enters the residual stream
-(CR-1), not weight precision — it is also stable across four ADC operating points,
-INT8 per-channel (Table S1), and four architectures.
+**Does the ordering survive when the model is usable? Yes (#707D-Q1/C1).** At usable
+operating points it holds emphatically: on **OPT-125M at a max-clip 8b point
+(PPL 93)**, W_fc2 is the most sensitive group and FFN (+21.5/layer) ≫ attention
+(−1.4) (Table S2 note); and on **Qwen2-7B (PPL 15.6 vs clean ~10)**, FFN>attention
+holds with profiling-ILP saving **34% ADC area within ~1.6 pp** downstream (Table S3).
+The ordering is a **structural** property of *where* ADC noise enters the residual
+stream (CR-1) — also stable across four ADC operating points, INT8 per-channel
+(Table S1), and four architectures.
 
-**Stronger PTQ (#707C-C7)** targets a different error source and **composes**:
-SmoothQuant (SQ+6b) is in Table 3, and GPTQ/AWQ + profiling-ILP is camera-ready;
-PTQ lowers the floor, not the **relative** ADC ordering.
+**Stronger weight-PTQ (#707C-C7)** targets a different error source and **composes**
+with ADC allocation: SmoothQuant (SQ+6b) is in Table 3, and GPTQ/AWQ + profiling-ILP
+is camera-ready.
 
 ## CR-3. Cross-architecture coverage and scalability
 *(#707A-W2, #707C-W3/C8)*
@@ -124,12 +125,11 @@ the bit-reduction result; the relative ADC-area saving follows from the $2^{b}$ 
 ## Reviewer #707C
 > *W1: PPL is coarse; it does not isolate the error source.*
 PPL is used **deliberately** as the deployment metric, but we isolate the relevant
-part: the **INT8-only control** (Sec. 5.1) removes the dominant confound — the
-FP32→CIM gap is INT8 weight quantization and ADC reduction adds only ~0.2 PPL — so
-our signal is the **ADC-induced ΔPPL on a fixed weight-quant floor**. We now also
-decompose the ADC error (Table S4, CR-1): the bit-reduction error is **decoupled**
-from the loss by propagation, so no decomposed local proxy predicts it — we optimize
-the directly-measured ΔPPL.
+part: our signal is the **ADC-induced ΔPPL on a fixed quantization floor** (the floor
+is orthogonal to ADC allocation; CR-2). We also decompose the ADC error itself
+(Table S4, CR-1): the bit-reduction error is **decoupled** from the loss by
+propagation, so no decomposed local proxy predicts it — we optimize the
+directly-measured ΔPPL.
 
 > *W2: evidence mostly group-level PPL; mechanism qualitative; ranking model-dependent (Qwen2 $W_{fc1}$).*
 The mechanism is no longer only qualitative — CR-1/Table S4 give a verified
@@ -172,7 +172,8 @@ measured sensitivity beats the saturation proxy at **both** budgets (−0.06% vs
 +0.43%; +0.31% vs +0.89%, paper Table 4).
 
 > *C7: combine with GPTQ/AWQ/SmoothQuant; operating-point realism.*
-See **CR-2** (composes with PTQ; validated at the usable Qwen2 point).
+See **CR-2** (composes with weight-PTQ; ordering validated at usable OPT max-clip
+and Qwen2 points).
 
 > *C8: full pipeline on a modern non-OPT model.*
 See **CR-3** and **Table S3**: the full profiling→ILP→PPA pipeline now runs on
@@ -194,8 +195,8 @@ identity of the single most-sensitive FFN sub-layer.
 
 ## Reviewer #707D
 > *W1: baseline PPL (~36 → ~300) is dominated by weight quantization.*
-Agreed: **ADC adds only 0.2 PPL** over the INT8 floor — the 306 PPL is the
-orthogonal weight floor (see **CR-2**).
+The high PPL is a fixed CIM quantization floor, **orthogonal** to our per-layer ADC
+bit *allocation*; at usable operating points the ordering still holds (see **CR-2**).
 
 > *W2: control/routing/mux/timing overheads of mixed-precision.*
 See **CR-4**: group-level uniformity avoids per-column multiplexing and irregular
@@ -210,8 +211,8 @@ exhaustive group-level enumeration shows the ILP matches the brute-force optimum
 1–2 groups, where the per-group measurements are exact by construction.
 
 > *C1: validate on a stronger, practically-usable quantized baseline.*
-See **CR-2** + **Table S3**: ordering and savings hold at the usable Qwen2-7B point
-(PPL 15.6 vs clean ~10).
+See **CR-2**: the ordering holds at usable points — OPT-125M max-clip 8b (PPL 93)
+and Qwen2-7B (PPL 15.6 vs clean ~10, Table S3).
 
 > *C2: include mixed-precision HW overhead (control, reconfig, mux, routing) in area/power/latency.*
 See **W2**/**CR-4**.
@@ -222,7 +223,7 @@ propagation — a ≈740× spread in local granular error collapses to ≈1.6× 
 hidden-state drift, showing the loss impact is set by propagation, not local error.
 
 > *Q1: does the ordering persist when weight-quant error is reduced?*
-Yes — see **CR-2** (tighter Qwen2 point + stronger INT8 per-channel floor, Table S1).
+Yes — see **CR-2** (usable OPT max-clip and Qwen2 points; INT8 per-channel, Table S1).
 
 > *Q2: timing mismatch / pipeline stalls with heterogeneous ADC bit-widths?*
 See **CR-4**: group-level allocation keeps each array internally uniform and
