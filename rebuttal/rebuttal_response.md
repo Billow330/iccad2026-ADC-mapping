@@ -17,27 +17,23 @@ Common Responses (CR-1–CR-4), then per-reviewer answers.
 *(#707A-W1, #707C-W2/C3/Q2, #707D-W3)*
 
 We have upgraded Fig. 5 from a qualitative picture to an **analytical
-decomposition**, now verified by the diagnostics the reviewers requested
-(**Table S4**). A uniform *b*-bit ADC with calibrated full-scale *V*₍FS₎ splits its
-error into a **granular** (resolution) term and an **overload/clipping** term:
+decomposition**, verified by the diagnostics the reviewers requested (**Table S4**).
+A uniform *b*-bit ADC with calibrated full-scale *V*₍FS₎ splits its error into a
+**granular** (resolution) term and an **overload/clipping** term:
 **D_ADC(b) = D_gran(b) + D_ovl**, with **D_gran ∝ (1−s)·V²₍FS₎·4⁻ᵇ** and **D_ovl
-independent of b** (s = saturation rate). Reducing one bit therefore multiplies
-**only** the granular term by 4 and leaves clipping untouched — confirmed across
-**every** group: 7→6 scales D_gran by **4.06 ≈ 4¹** and D_ovl by **1.00**
-(Table S4). To first order the loss impact is
-
-  **sensitivity_g ≈ ΔD_gran,g (granular budget) × J_g (residual-stream propagation gain).**
-
-Both factors vary by orders of magnitude **and are perfectly anti-correlated
-across groups (Spearman ρ = −1.0, Table S4)**: attention-input projections receive
-the **largest** bit-reduction error yet propagate it **≈400× more weakly**
-(W_qkv J≈0.22×10³ vs W_fc2/W_out J≈94–128×10³) — the quantitative form of the
-Fig. 5 attenuation argument, and the reason high-saturation attention layers are
-the **least** ADC-sensitive. Because sensitivity is the **product** of two opposing
-factors, no static signal captures it: saturation (ρ=−0.70) and Hessian (ρ=0.20)
-correlate weakly, with opposite signs, so **direct ΔPPL profiling is necessary**.
-The flow consumes only measured ΔPPL and is provably optimal (regret = 0, Table 2);
-FFN>attention is robust across probes/seeds (Table S2, ≈11× at 7→4).
+independent of b**. Reducing one bit therefore multiplies **only** the granular term
+by 4 — confirmed across **every** group: 7→6 scales D_gran by **4.06 ≈ 4¹** and D_ovl
+by **1.00** (Table S4). The perturbation a group receives is thus its granular budget
+ΔD_gran, propagated to the loss (Fig. 5), and **two measured facts show why no local
+signal can rank it**: (i) ΔD_gran does **not** track saturation — since
+D_gran ∝ (1−s)·V²₍FS₎, the high-saturation W_qkv has the **largest** budget (large
+V_FS), not the smallest; (ii) **decoupling** — across groups ΔD_gran spans **≈740×**,
+yet hidden-state drift spans only **≈1.6×** (output KL ≈2.2×) and is **non-monotone**
+in measured ΔPPL, so even output-level diagnostics don't rank loss-level sensitivity.
+Saturation (ρ=−0.70) and Hessian (ρ=0.20) each see only one local statistic and miss
+this propagation — **so direct ΔPPL profiling is necessary**. The flow consumes only
+measured ΔPPL and is provably optimal (regret = 0, Table 2); FFN>attention is robust
+across probes/seeds (Table S2, ≈11× at 7→4).
 
 ## CR-2. Does the ordering survive a stronger weight-quantization floor?
 *(#707C-C7, #707D-W1/Q1)*
@@ -92,9 +88,9 @@ from tens (OPT-125M) to hundreds of mm² (OPT-1.3B).
 ## Reviewer #707A
 > *W1: inversion is an intuitive qualitative hypothesis, not a proof.*
 See **CR-1** and **Table S4**: the inversion now has an analytical decomposition
-(bit-width scales only the granular error, verified at 4.06≈4¹) and a two-factor
-law whose factors are anti-correlated (ρ=−1.0), explaining why saturation and
-Hessian each fail. FFN>attention is also shown robust (Table S2).
+(bit-width scales only the granular error, verified at 4.06≈4¹) plus a measured
+local-error/loss **decoupling** that explains why saturation and Hessian fail.
+FFN>attention is also shown robust (Table S2).
 
 > *W2: end-to-end allocation focuses on smaller workloads.*
 See **CR-3** (OPT-1.3B full allocation + new Qwen2-7B full pipeline, Table S3).
@@ -128,14 +124,14 @@ PPL is used **deliberately** as the deployment metric, but we isolate the releva
 part: the **INT8-only control** (Sec. 5.1) removes the dominant confound — the
 FP32→CIM gap is INT8 weight quantization and ADC reduction adds only ~0.2 PPL — so
 our signal is the **ADC-induced ΔPPL on a fixed weight-quant floor**. We now also
-decompose the ADC error (Table S4, CR-1): sensitivity is the **product** of two
-anti-correlated factors, so no single decomposed proxy predicts it — we optimize
+decompose the ADC error (Table S4, CR-1): the bit-reduction error is **decoupled**
+from the loss by propagation, so no decomposed local proxy predicts it — we optimize
 the directly-measured ΔPPL.
 
 > *W2: evidence mostly group-level PPL; mechanism qualitative; ranking model-dependent (Qwen2 $W_{fc1}$).*
 The mechanism is no longer only qualitative — CR-1/Table S4 give a verified
-decomposition and a two-factor law explaining the inversion and proxy failures —
-and it is **not load-bearing** (allocation consumes only measured ΔPPL). The
+decomposition plus a measured local-error/loss decoupling that explains the proxy
+failures — and it is **not load-bearing** (allocation consumes only measured ΔPPL). The
 model-dependence is **architectural** (Qwen2's gated MLP makes $W_{fc1}$ the
 sensitive FFN sub-layer); the architecture-independent claim **FFN>attention**
 holds on all four models (Table 4) and probes/seeds (Table S2).
@@ -156,8 +152,8 @@ See **Q1** (Table S1): the ranking and ILP allocation are identical under NLL (S
 
 > *C3: add mechanism diagnostics (MSE/SQNR, residual-norm, KL, drift).*
 Done — **Table S4** reports granular/clipping MSE, SQNR, hidden-state drift, and
-output KL per group, and uses them to verify the decomposition and the two-factor
-mechanism (**CR-1**).
+output KL per group, verifying the decomposition and the local-error/loss decoupling
+(**CR-1**).
 
 > *C4: separate model-specific from general ranking.*
 See **W2**/**Q2**.
@@ -205,7 +201,7 @@ power, latency), included in the NeuroSIM estimate.
 
 > *W3: mechanism is qualitative; the ILP uses a simplified linear degradation model.*
 Mechanism: now analytical — see **CR-1** and **Table S4** (verified decomposition +
-two-factor law). The linear surrogate is **validated, not assumed**:
+local-error/loss decoupling). The linear surrogate is **validated, not assumed**:
 exhaustive group-level enumeration shows the ILP matches the brute-force optimum
 (**regret = 0**, Sec. 4.2 / Table 2), and at moderate budgets the ILP reduces only
 1–2 groups, where the per-group measurements are exact by construction.
@@ -218,8 +214,9 @@ hold at a usable Qwen2-7B operating point (PPL 16).
 See **W2**/**CR-4**.
 
 > *C3: more rigorous ADC-noise propagation analysis.*
-See **CR-1** and **Table S4**: the propagation gain $J$ is measured per group and
-spans ≈400× (attention-input errors are attenuated; FFN/residual errors are not).
+See **CR-1** and **Table S4**: we measure the ADC error decomposition and its
+propagation — a ≈740× spread in local granular error collapses to ≈1.6× in
+hidden-state drift, showing the loss impact is set by propagation, not local error.
 
 > *Q1: does the ordering persist when weight-quant error is reduced?*
 Yes — see **CR-2** (INT8 per-channel floor preserves FFN>attention, Table S1).

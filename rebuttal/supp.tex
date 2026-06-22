@@ -112,52 +112,56 @@ term. With saturation rate $s=\Pr[\,|y|>V_{FS}\,]$ and step $\Delta=2V_{FS}/2^{b
 D_{\mathrm{ADC}}(b)=\underbrace{D_{\mathrm{gran}}(b)}_{\approx (1-s)\,\Delta^{2}/12\;\propto\;(1-s)\,V_{FS}^{2}\,4^{-b}}+\underbrace{D_{\mathrm{ovl}}}_{\mathbb{E}[(|y|-V_{FS})^{2}\mid |y|>V_{FS}]\;\text{(independent of }b)}.
 \end{equation*}
 Reducing one bit thus multiplies \emph{only} the granular term by $4$ and leaves
-clipping unchanged. To first order the loss impact of reducing group $g$ is
-$\;\text{sensitivity}_g\;\approx\;\underbrace{\Delta D_{\mathrm{gran},g}}_{\text{granular budget}}\times\underbrace{J_g}_{\text{residual-stream propagation gain}}$,
-where $J_g$ is the gain with which an output perturbation of group $g$ reaches the
-loss along the attention/FFN/residual paths (Fig.~5). The saturation rate captures
-only the $(1-s)$ part of the granular budget (it ignores $V_{FS}$ and propagation);
-the Hessian trace approximates propagation but ignores the budget --- so each
-standard proxy sees at most one factor and mispredicts the product, which is
-exactly why the paper measures $\Delta$PPL directly.
+clipping unchanged. The bit-reduction perturbation a group receives is therefore its
+granular budget $\Delta D_{\mathrm{gran}}$, which then propagates to the loss along
+the attention/FFN/residual paths (Fig.~5). Two measured facts (Table~S4) show why
+\emph{no local statistic can rank this loss impact}. (i)~$\Delta D_{\mathrm{gran}}$
+does not track saturation: since $D_{\mathrm{gran}}\!\propto\!(1{-}s)\,V_{FS}^{2}4^{-b}$,
+the high-saturation attention input projection $W_{qkv}$ has the \emph{largest}
+budget (large $V_{FS}$), not the smallest. (ii)~The budget is \emph{decoupled} from
+the loss by propagation: across groups $\Delta D_{\mathrm{gran}}$ spans
+$\approx\!740\times$, yet the resulting hidden-state drift spans only
+$\approx\!1.6\times$ and is non-monotone in the measured $\Delta$PPL. Saturation
+($\rho{=}{-}0.70$) and Hessian ($\rho{=}0.20$) each see only one local statistic and
+miss this propagation, which is exactly why the paper measures $\Delta$PPL directly.
 
 \vspace{0.8em}
-\noindent\textbf{Table S4. Mechanism diagnostics confirm the decomposition}
-(OPT-125M, INT8 per-channel weights, p99-clip, group probe $7{\to}6$). This table
-isolates the two \emph{mechanistic factors}; the sensitivity ranking itself
-(FFN$>$attention; $W_{fc2}$ most sensitive at the paper's operating point) is in
-Tables~S1--S2 and paper Table~4. \emph{Decomposition law:} in every group one-bit
-reduction scales the granular error $D_{\mathrm{gran}}$ by $4.06\!\approx\!4^{1}$
-and the clipping error $D_{\mathrm{ovl}}$ by $1.00$ --- the bit-width touches only
-the granular term. \emph{Two anti-correlated factors:} the local granular budget
-$\Delta D_{\mathrm{gran}}$ and the propagation gain $J$ are \textbf{perfectly
-anti-correlated across groups (Spearman $\rho=-1.0$)}; $W_{qkv}$ receives the
-\emph{largest} bit-reduction error yet propagates it $\approx\!400\times$ more
-weakly than $W_{fc2}/W_{out}$ ($J$ is hidden-state drift per unit local error;
-drift and output KL co-move, $\rho=1.0$) --- the quantitative form of the Fig.~5
-attenuation argument and the reason high-saturation attention layers are the
-\emph{least} ADC-sensitive. All diagnostics requested by \#707C-C3
-(granular/clipping MSE, SQNR, hidden-state drift, output KL) are reported. The
-\emph{product} of the two factors reproduces FFN$>$attention; which FFN sub-layer
-ranks top is set by this operating-point/architecture-dependent product
-($W_{fc2}$ at the paper's max-clip point, $W_{fc1}$ on Qwen2's gated MLP),
-explaining the model dependence noted in \#707C-W2.
+\noindent\textbf{Table S4. Mechanism diagnostics: a verified decomposition and a
+local-error/loss decoupling} (OPT-125M, INT8 per-channel weights, p99-clip, group
+probe $7{\to}6$). The sensitivity ranking itself (FFN$>$attention; $W_{fc2}$ most
+sensitive at the paper's operating point) is in Tables~S1--S2 and paper Table~4;
+this table explains \emph{why no local proxy reproduces it}. \emph{Decomposition
+law:} in every group one-bit reduction scales the granular error
+$D_{\mathrm{gran}}$ by $4.06\!\approx\!4^{1}$ and the clipping error
+$D_{\mathrm{ovl}}$ by $1.00$ --- the bit-width touches only the granular term.
+\emph{Local error does not track saturation:} the high-saturation $W_{qkv}$ has the
+\emph{largest} granular budget $\Delta D_{\mathrm{gran}}$ (large $V_{FS}$), not the
+smallest. \emph{Decoupling:} $\Delta D_{\mathrm{gran}}$ spans $\approx\!740\times$
+across groups, yet hidden-state drift spans only $\approx\!1.6\times$ and output KL
+$\approx\!2.2\times$ --- the local ADC error is decoupled from its output (and loss)
+effect by residual-stream propagation, so neither saturation, local MSE, nor even
+these output diagnostics rank the loss-level $\Delta$PPL. All diagnostics requested
+by \#707C-C3 (granular/clipping MSE, SQNR, hidden-state drift, output KL) are
+reported. The robust loss-level signal is FFN$>$attention; the specific top FFN
+sub-layer is operating-point/architecture-dependent ($W_{fc2}$ at the paper's
+max-clip point, $W_{fc1}$ on Qwen2's gated MLP), explaining the model dependence
+noted in \#707C-W2.
 
 \begin{center}
 \footnotesize
 \setlength{\tabcolsep}{5.5pt}
 \begin{tabular}{lrrrrrrr}
 \toprule
-Group & $\kappa$ (kurt.) & $D_{\mathrm{gran}}{\uparrow}$ & $D_{\mathrm{ovl}}{\uparrow}$ & $\Delta D_{\mathrm{gran}}$ & SQNR & KL & $J$ \\
- & heavy tail & ($7{\to}6$) & ($7{\to}6$) & ($\times10^{-4}$) & (dB) & ($\times10^{-3}$) & ($\times10^{3}$) \\
+Group & $\kappa$ (kurt.) & $D_{\mathrm{gran}}{\uparrow}$ & $D_{\mathrm{ovl}}{\uparrow}$ & $\Delta D_{\mathrm{gran}}$ & SQNR & drift & KL \\
+ & heavy tail & ($7{\to}6$) & ($7{\to}6$) & ($\times10^{-4}$) & (dB) & ($\times10^{-2}$) & ($\times10^{-3}$) \\
 \midrule
-$W_{qkv}$ (attn in)  & $1.1$             & $4.06$ & $1.00$ & $1.97$  & $27.5$ & $2.82$ & $0.22$  \\
-$W_{out}$ (attn out) & $22$              & $4.06$ & $1.00$ & $0.003$ & $10.8$ & $1.86$ & $127.9$ \\
-$W_{fc1}$ (FFN up)   & $47$              & $4.06$ & $1.00$ & $0.256$ & $15.3$ & $4.14$ & $2.09$  \\
-$W_{fc2}$ (FFN down) & $1.5\times10^{5}$ & $4.06$ & $1.00$ & $0.004$ & $4.3$  & $1.84$ & $94.2$  \\
+$W_{qkv}$ (attn in)  & $1.1$             & $4.06$ & $1.00$ & $1.97$  & $27.5$ & $4.38$ & $2.82$ \\
+$W_{out}$ (attn out) & $22$              & $4.06$ & $1.00$ & $0.003$ & $10.8$ & $3.40$ & $1.86$ \\
+$W_{fc1}$ (FFN up)   & $47$              & $4.06$ & $1.00$ & $0.256$ & $15.3$ & $5.33$ & $4.14$ \\
+$W_{fc2}$ (FFN down) & $1.5\times10^{5}$ & $4.06$ & $1.00$ & $0.004$ & $4.3$  & $3.35$ & $1.84$ \\
 \midrule
-\multicolumn{8}{l}{Granular budget $\Delta D_{\mathrm{gran}}$ and propagation gain $J$ are anti-correlated across groups (Spearman $\rho=-1.0$).}\\
-\multicolumn{8}{l}{Sensitivity $=$ their \emph{product}; neither saturation ($\rho{=}{-}0.70$) nor Hessian ($\rho{=}0.20$) captures both factors.}\\
+\multicolumn{8}{l}{Local granular error $\Delta D_{\mathrm{gran}}$ spans $\approx\!740\times$; hidden-state drift only $\approx\!1.6\times$, KL $\approx\!2.2\times$ --- decoupled by propagation.}\\
+\multicolumn{8}{l}{Neither saturation ($\rho{=}{-}0.70$), Hessian ($\rho{=}0.20$), nor any local/output diagnostic here ranks the loss-level $\Delta$PPL.}\\
 \bottomrule
 \end{tabular}
 \end{center}
