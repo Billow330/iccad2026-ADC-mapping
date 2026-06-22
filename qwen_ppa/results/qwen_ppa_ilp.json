@@ -1,0 +1,66 @@
+{
+  "baseline_ppl": 15.592,
+  "sigma_8to6": {
+    "attn_qkv": 0.20433,
+    "attn_out": 0.31456,
+    "ffn_up": 0.01359,
+    "ffn_down": 68.66182,
+    "lm_head": 0.13238
+  },
+  "colsum": {
+    "attn_qkv": 129024,
+    "attn_out": 100352,
+    "ffn_up": 1060864,
+    "ffn_down": 100352,
+    "lm_head": 152064
+  },
+  "nlay": {
+    "attn_qkv": 84,
+    "attn_out": 28,
+    "ffn_up": 56,
+    "ffn_down": 28,
+    "lm_head": 1
+  },
+  "allocs": {
+    "budget20": {
+      "group_bits": {
+        "attn_qkv": 8,
+        "attn_out": 8,
+        "ffn_up": 7,
+        "ffn_down": 8,
+        "lm_head": 8
+      },
+      "adc_area_saving": 0.3438,
+      "adc_energy_saving_2b_proxy": 0.3438,
+      "ppl": 15.865,
+      "rel_ppl_vs_base": 0.0175
+    },
+    "budget30": {
+      "group_bits": {
+        "attn_qkv": 8,
+        "attn_out": 8,
+        "ffn_up": 7,
+        "ffn_down": 8,
+        "lm_head": 8
+      },
+      "adc_area_saving": 0.3438,
+      "adc_energy_saving_2b_proxy": 0.3438,
+      "ppl": 15.865,
+      "rel_ppl_vs_base": 0.0175
+    },
+    "budget50": {
+      "group_bits": {
+        "attn_qkv": 8,
+        "attn_out": 8,
+        "ffn_up": 6,
+        "ffn_down": 8,
+        "lm_head": 8
+      },
+      "adc_area_saving": 0.5158,
+      "adc_energy_saving_2b_proxy": 0.5158,
+      "ppl": 16.353,
+      "rel_ppl_vs_base": 0.0488
+    }
+  },
+  "naive_reduce_ffndown_6b_ppl": 1938.123
+}

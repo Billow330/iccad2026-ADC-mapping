@@ -1,0 +1,10 @@
+{
+  "clean": 10.326,
+  "perlayer_max_8b": 16.082,
+  "perchan_max_10b": 17.241,
+  "perchan_max_8b": 17.2,
+  "perchan_max_6b": 17.808,
+  "protect_lmheaddown_perchan_8b": 17.242,
+  "sq_perlayer_max_8b": 16.081,
+  "sq_perchan_max_8b": 17.22
+}

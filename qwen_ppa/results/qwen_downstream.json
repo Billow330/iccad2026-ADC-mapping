@@ -1,0 +1,14 @@
+{
+  "clean": {
+    "piqa_acc": 80.4,
+    "boolq_acc": 85.2
+  },
+  "cim_max8b": {
+    "piqa_acc": 77.4,
+    "boolq_acc": 75.0
+  },
+  "ilp_ffnup7b": {
+    "piqa_acc": 77.2,
+    "boolq_acc": 73.4
+  }
+}

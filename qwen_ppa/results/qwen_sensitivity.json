@@ -1,0 +1,98 @@
+{
+  "baseline_max8b": 15.592,
+  "group_sizes": {
+    "attn_qkv": 84,
+    "attn_out": 28,
+    "ffn_up": 56,
+    "ffn_down": 28,
+    "lm_head": 1
+  },
+  "probes": {
+    "8to6": {
+      "per_group": {
+        "attn_qkv": {
+          "ppl": 32.756,
+          "dppl": 17.1641,
+          "sigma_per_layer": 0.20433
+        },
+        "attn_out": {
+          "ppl": 24.4,
+          "dppl": 8.8077,
+          "sigma_per_layer": 0.31456
+        },
+        "ffn_up": {
+          "ppl": 16.353,
+          "dppl": 0.761,
+          "sigma_per_layer": 0.01359
+        },
+        "ffn_down": {
+          "ppl": 1938.123,
+          "dppl": 1922.5309,
+          "sigma_per_layer": 68.66182
+        },
+        "lm_head": {
+          "ppl": 15.724,
+          "dppl": 0.1324,
+          "sigma_per_layer": 0.13238
+        }
+      },
+      "block_FFN": {
+        "ppl": 1749.4,
+        "dppl": 1733.8076,
+        "n_layers": 84,
+        "sigma_per_layer": 20.64057
+      },
+      "block_ATTN": {
+        "ppl": 64.164,
+        "dppl": 48.5723,
+        "n_layers": 112,
+        "sigma_per_layer": 0.43368
+      },
+      "FFN_gt_ATTN": true,
+      "FFN_over_ATTN_ratio": 47.594
+    },
+    "8to4": {
+      "per_group": {
+        "attn_qkv": {
+          "ppl": 15019.617,
+          "dppl": 15004.0252,
+          "sigma_per_layer": 178.61935
+        },
+        "attn_out": {
+          "ppl": 350.85,
+          "dppl": 335.258,
+          "sigma_per_layer": 11.9735
+        },
+        "ffn_up": {
+          "ppl": 46.542,
+          "dppl": 30.9495,
+          "sigma_per_layer": 0.55267
+        },
+        "ffn_down": {
+          "ppl": 13849.937,
+          "dppl": 13834.345,
+          "sigma_per_layer": 494.08375
+        },
+        "lm_head": {
+          "ppl": 17.727,
+          "dppl": 2.1345,
+          "sigma_per_layer": 2.13448
+        }
+      },
+      "block_FFN": {
+        "ppl": 5764.626,
+        "dppl": 5749.0341,
+        "n_layers": 84,
+        "sigma_per_layer": 68.44088
+      },
+      "block_ATTN": {
+        "ppl": 10038.943,
+        "dppl": 10023.3508,
+        "n_layers": 112,
+        "sigma_per_layer": 89.4942
+      },
+      "FFN_gt_ATTN": false,
+      "FFN_over_ATTN_ratio": 0.765
+    }
+  }
+}
