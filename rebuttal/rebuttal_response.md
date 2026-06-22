@@ -98,25 +98,23 @@ See **CR-3** (OPT-1.3B full allocation + new Qwen2-7B full pipeline, Table S3).
 > *W3: when to move from group-level to per-layer control?*
 Quantified in **Sec. 3.2**: group-ILP beats per-layer ILP at moderate budgets
 (≤30% savings) because group averaging suppresses limited-batch noise; per-layer
-wins only at aggressive budgets (>40%). We will state this ~30–40% crossover as
-an explicit design rule.
+wins only at aggressive budgets (>40%). We will state this ~30–40% crossover as a
+design rule.
 
 ## Reviewer #707B
 > *W1: light on ADC physical-implementation details; the precise "20%" should be taken with a grain of salt.*
 See **CR-4**: we specify 45 nm CMOS, MLSA-type ADC, 128×128 RRAM, 1-bit DAC, and
 bit-sliced INT8, with $A_{ADC}\propto M\cdot2^{b}$ (Eq. 1). All areas are
 **NeuroSIM-model estimates, not silicon**; the **relative** 20% saving is set by the
-$2^{b}$ law and the per-group column counts, so it is robust to fine layout details
-even though an absolute silicon number remains future work.
+$2^{b}$ law and the per-group column counts, so it is robust to fine layout details.
 
 > *C1 (comment): formulate as a "bit-reduction" benefit rather than an "area" benefit.*
-Adopted — see **CR-4**: the camera-ready leads with the hardware-agnostic
-**per-layer ADC bit-reduction** and presents area as the NeuroSIM consequence.
+Adopted — see **CR-4**: lead with **per-layer ADC bit-reduction**, presenting area
+as the NeuroSIM consequence.
 
 > *Q1: provide ADC-circuit/CIM assumptions, or stick to bit-number savings?*
-We do **both** — see **CR-4**: the assumptions above are stated explicitly, and we
-foreground the bit-reduction result; the relative ADC-area saving follows from the
-$2^{b}$ law independent of fine layout details.
+We do **both** (see **CR-4**): assumptions are stated explicitly and we foreground
+the bit-reduction result; the relative ADC-area saving follows from the $2^{b}$ law.
 
 ## Reviewer #707C
 > *W1: PPL is coarse; it does not isolate the error source.*
@@ -144,8 +142,10 @@ is the **signal**: proxies protect the wrong layers (random costs +2.6%±1.4% at
 same budget; details in C5/C6).
 
 > *C1: define "sensitivity" precisely.*
-Agreed: "PPL-based sensitivity to ADC-bit reduction under the specified CIM
-setup," not general layer importance.
+Agreed; the camera-ready adds a formal definition — sensitivity of group *g* = the
+**test-PPL increase from reducing only group *g*'s ADC precision by one bit** under
+the fixed CIM setup — a CIM-ADC/PPL-specific quantity, **not** general layer
+importance or task sensitivity.
 
 > *C2: justify PPL vs token-level NLL.*
 See **Q1** (Table S1): the ranking and ILP allocation are identical under NLL (Spearman ρ=1.0).
@@ -233,7 +233,7 @@ for SAR).
 
 ---
 
-We thank the reviewers again. The supplementary results (Tables S1–S4) and the
-clarifications address the central concerns — proxy failure and its analytical
-mechanism, the FFN>attention ordering and its robustness, metric invariance,
-weight-quant independence, and ADC modeling — within the existing contribution.
+We thank the reviewers. The supplementary results (Tables S1–S4) and
+clarifications address the central concerns — proxy failure and its mechanism, the
+FFN>attention ordering and its robustness, metric invariance, weight-quant
+independence, and ADC modeling — within the existing contribution.
