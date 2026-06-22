@@ -212,7 +212,8 @@ exhaustive group-level enumeration shows the ILP matches the brute-force optimum
 1–2 groups, where the per-group measurements are exact by construction.
 
 > *C1: validate on a stronger, practically-usable quantized baseline.*
-See **W1**/**CR-2**.
+See **W1**/**CR-2**; and **Table S3** shows the ordering and the allocation's savings
+hold at a usable Qwen2-7B operating point (PPL 16).
 
 > *C2: include mixed-precision HW overhead (control, reconfig, mux, routing) in area/power/latency.*
 See **W2**/**CR-4**.
