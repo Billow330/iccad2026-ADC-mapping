@@ -177,8 +177,8 @@ and Qwen2 points).
 > *C8: full pipeline on a modern non-OPT model.*
 See **CR-3** and **Table S3**: the full profiling→ILP→PPA pipeline now runs on
 Qwen2-7B at a usable operating point (34% ADC area+energy saving at +1.8% PPL;
-PIQA/BoolQ within ~1.6 pp of CIM-8b). ADC-read latency falls with fewer bits
-(quantified on OPT-125M, Sec. 5.3).
+PIQA/BoolQ within ~1.6 pp of CIM-8b; ADC-read latency follows the same
+bit-reduction lever, Sec. 5.3).
 
 > *Q1: recompute sensitivity with token-level NLL / cross-entropy?*
 **Table S1**: the per-group ranking is identical (**Spearman ρ = 1.0**) and the
