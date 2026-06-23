@@ -63,10 +63,9 @@ validated on Pythia-410M and Qwen2-7B. #707C-C8 conflates two distinct
 asks — *scale* and *modern architecture*: the full PPL/area/energy/latency/downstream
 pipeline is on OPT-125M (Sec. 5.3), and full allocation at scale on OPT-1.3B
 (Table 4). New: at a usable max-clip operating point, the full profiling→ILP→PPA
-pipeline on **Qwen2-7B (Table S3)** yields **34% ADC area+energy saving at +1.8% PPL**
-with **PIQA/BoolQ preserved within ~1.6 pp** of the CIM-8b baseline, while
-proxy-blind reduction destroys the model — confirming transfer to a modern non-OPT
-architecture.
+pipeline on **Qwen2-7B (Table S3)** yields **34% ADC area+energy saving at +1.8% PPL**,
+while proxy-blind reduction destroys the model — confirming transfer to a modern
+non-OPT architecture.
 
 ## CR-4. ADC implementation realism: topology/node, overhead, area scaling
 *(#707B-W1/C1/Q1, #707D-W2/Q2/Q3)*
@@ -177,8 +176,8 @@ and Qwen2 points).
 
 > *C8: full pipeline on a modern non-OPT model.*
 See **CR-3** and **Table S3**: the full profiling→ILP→PPA pipeline now runs on
-Qwen2-7B at a usable operating point (34% ADC area+energy saving at +1.8% PPL,
-PIQA/BoolQ preserved within ~1.6 pp of CIM-8b).
+Qwen2-7B at a usable operating point (34% ADC area+energy saving at +1.8% PPL;
+ADC-read latency likewise reduced, Sec. 5.3; PIQA/BoolQ within ~1.6 pp of CIM-8b).
 
 > *Q1: recompute sensitivity with token-level NLL / cross-entropy?*
 **Table S1**: the per-group ranking is identical (**Spearman ρ = 1.0**) and the

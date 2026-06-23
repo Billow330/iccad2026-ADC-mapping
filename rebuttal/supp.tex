@@ -91,11 +91,11 @@ usable operating point} (WikiText-2; \emph{max-clip} ADC calibration --- one of 
 paper's three calibration schemes (Table~I) --- 8-bit nominal; baseline PPL
 $\approx$16 vs clean $\approx$10). Profiling-guided ILP allocates ADC bits from the
 measured group sensitivities under an ADC-area budget; ADC energy follows the same
-$2^{b}$ model as in the paper. FFN is far more ADC-sensitive than attention, so the
-ILP protects the sensitive group and reduces the insensitive high-column-count
-group. Downstream accuracy (PIQA/BoolQ) is preserved within $\approx$1.6\,pp of the
-CIM-8b baseline. (Answers \#707C-C8 and \#707A-W2: a complete modern-architecture
-pipeline at a realistic operating point.)
+$2^{b}$ model as in the paper, and ADC-read latency likewise falls with resolution
+(cf.\ $-$12.5\% on OPT-125M, Sec.~5.3). The ILP protects the sensitive FFN group and
+reduces the insensitive high-column-count group. Downstream accuracy (PIQA/BoolQ) is
+preserved within $\approx$1.6\,pp of the CIM-8b baseline. (Answers \#707C-C8 and
+\#707A-W2.)
 
 \begin{center}
 \begin{tabular}{lrrrr}
