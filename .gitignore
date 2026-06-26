@@ -74,3 +74,12 @@ NeuroSim/results/smoke_v2/smooth_scales_*.pt
 NeuroSim/results/gpt2/smooth_scales_*.pt
 NeuroSim/results/gpt2_p99/smooth_scales_*.pt
 NeuroSim/results/opt125m/smooth_scales_*.pt
+
+# ── Rebuttal LaTeX build artifacts ──
+rebuttal/*.aux
+rebuttal/*.log
+rebuttal/*.out
+rebuttal/*.synctex.gz
+
+# ── Large regeneratable NeuroSIM per-layer CSVs ──
+NeuroSim/results/ppa/*/layer_data/
